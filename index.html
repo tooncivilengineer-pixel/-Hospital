@@ -2315,56 +2315,73 @@
         import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : "{}";
-        const firebaseConfig = JSON.parse(firebaseConfigStr || "{}");
-        const app = Object.keys(firebaseConfig).length > 0 ? initializeApp(firebaseConfig) : null;
+        // ใช้ Firebase Config ของโปรเจกต์ toon-civil-gis
+        const firebaseConfig = {
+            apiKey: "AIzaSyDxFfXCG5looRXmriLgGmCSHDpo2_6voBU",
+            authDomain: "toon-civil-gis.firebaseapp.com",
+            projectId: "toon-civil-gis",
+            storageBucket: "toon-civil-gis.firebasestorage.app",
+            messagingSenderId: "795968328879",
+            appId: "1:795968328879:web:b494aec8fdab277453f05a",
+            measurementId: "G-WYZCPFCP8L"
+        };
+        
+        const app = initializeApp(firebaseConfig);
         
         if (app) {
-            const auth = getAuth(app); const db = getFirestore(app); const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const auth = getAuth(app); 
+            const db = getFirestore(app); 
+            // กำหนด Collection Name เป็นชื่อแอปหรือชื่อที่ต้องการ
+            const appId = 'toon-civil-app';
+            
             window.firebaseDB = db; window.appId = appId; window.currentUser = null;
 
             window.saveProjectToCloud = async function(projectData) {
                 if (!window.currentUser) return;
                 const isNew = !projectData.id; const projId = isNew ? Date.now().toString() : projectData.id.toString(); projectData.id = projId;
                 try {
-                    const projRef = doc(db, 'artifacts', appId, 'public', 'data', 'projects', projId);
+                    const projRef = doc(db, 'projects', projId);
                     await setDoc(projRef, projectData);
-                } catch (error) { console.error("Save Error:", error); showAlert("เกิดข้อผิดพลาดในการบันทึกข้อมูลคลาวด์"); }
+                } catch (error) { console.error("Save Error:", error); showAlert("เกิดข้อผิดพลาดในการบันทึกข้อมูลคลาวด์: " + error.message); }
             };
 
             window.deleteProjectFromCloud = async function(projId) {
                 if (!window.currentUser) return;
                 try {
-                    const projRef = doc(db, 'artifacts', appId, 'public', 'data', 'projects', projId.toString());
+                    const projRef = doc(db, 'projects', projId.toString());
                     await deleteDoc(projRef);
-                } catch (error) { console.error("Delete Error:", error); showAlert("เกิดข้อผิดพลาดในการลบข้อมูลคลาวด์"); }
+                } catch (error) { console.error("Delete Error:", error); showAlert("เกิดข้อผิดพลาดในการลบข้อมูลคลาวด์: " + error.message); }
             };
 
             window.saveHospitalToCloud = async function(hospData) {
                 if (!window.currentUser) return;
                 try {
-                    const ref = doc(db, 'artifacts', appId, 'public', 'data', 'hospitals', hospData.id);
+                    const ref = doc(db, 'hospitals', hospData.id);
                     await setDoc(ref, hospData);
                 } catch(e) { console.error("Save Hosp Error:", e); }
             };
 
             async function initAuth() {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) { await signInWithCustomToken(auth, __initial_auth_token); } 
-                else { await signInAnonymously(auth); }
+                try {
+                    await signInAnonymously(auth);
+                } catch(error) {
+                    console.error("Auth Error:", error);
+                    showAlert("ไม่สามารถเชื่อมต่อระบบยืนยันตัวตนได้: " + error.message);
+                }
             }
 
             initAuth();
             onAuthStateChanged(auth, (user) => {
                 window.currentUser = user;
                 if (user) {
-                    const projectsRef = collection(db, 'artifacts', appId, 'public', 'data', 'projects');
+                    const projectsRef = collection(db, 'projects');
                     onSnapshot(projectsRef, (snapshot) => {
                         const fetchedProjects = []; snapshot.forEach((doc) => { fetchedProjects.push({ id: doc.id, ...doc.data() }); });
                         if(window.updateProjectsFromCloud) { window.updateProjectsFromCloud(fetchedProjects); }
                     }, (error) => { console.error("Firestore Listen Error:", error); });
 
                     // รับข้อมูล รพ.สต. จาก Cloud
-                    const hospitalsRef = collection(db, 'artifacts', appId, 'public', 'data', 'hospitals');
+                    const hospitalsRef = collection(db, 'hospitals');
                     onSnapshot(hospitalsRef, (snapshot) => {
                         hospitalsData = [];
                         snapshot.forEach(doc => hospitalsData.push({ id: doc.id, ...doc.data() }));
@@ -2372,9 +2389,6 @@
                     }, (error) => { console.error("Firestore Listen Hosp Error:", error); });
                 }
             });
-        } else {
-            console.warn("Firebase config not found. Running in offline mode.");
-            setTimeout(() => { const cloudLoader = document.getElementById('cloudLoader'); if(cloudLoader) cloudLoader.classList.add('hidden'); }, 1000);
         }
     </script>
 </body>
