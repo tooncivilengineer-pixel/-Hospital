@@ -93,6 +93,26 @@
         </div>
     </div>
 
+    <!-- Rename Hospital Modal -->
+    <div id="renameHospitalModal" class="fixed inset-0 bg-black bg-opacity-50 z-[9999] hidden flex justify-center items-center">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 transform transition-all">
+            <h3 class="text-lg font-bold text-gray-800 mb-4"><i class="fa-solid fa-pen-to-square text-blue-600 mr-2"></i> แก้ไขชื่อ รพ.สต.</h3>
+            <div class="mb-4">
+                <label class="block text-xs font-bold text-gray-500 mb-1">ชื่อเดิม</label>
+                <input type="text" id="renameHospOld" readonly class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-100 text-gray-500 text-sm">
+            </div>
+            <div class="mb-4">
+                <label class="block text-xs font-bold text-gray-500 mb-1">ชื่อใหม่ (แก้ไขได้เลย)</label>
+                <input type="text" id="renameHospNew" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm font-bold text-gray-800">
+            </div>
+            <input type="hidden" id="renameHospDist">
+            <div class="flex justify-end gap-3 mt-6">
+                <button onclick="closeRenameHospitalModal()" class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg font-bold transition-colors text-sm">ยกเลิก</button>
+                <button onclick="saveRenameHospital()" class="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg font-bold shadow-md transition-colors text-sm"><i class="fa-solid fa-save mr-1"></i> บันทึก</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Login Modal (Role Access) -->
     <div id="loginModal" class="fixed inset-0 bg-blue-900 bg-opacity-95 z-[5000] flex justify-center items-center">
         <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm text-center transform transition-all">
@@ -184,8 +204,8 @@
                 <span id="mapText">เปิดแผนที่ดาวเทียม</span>
             </button>
             <button onclick="openHospitalModal()" class="admin-only bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium py-1.5 px-2.5 border border-rose-700 rounded shadow-sm flex items-center gap-1.5 transition-all font-bold">
-                <i class="fa-solid fa-map-location-dot w-3 text-center"></i>
-                <span>จัดการ รพ.สต. / เพิ่มโครงการ</span>
+                <i class="fa-solid fa-house-medical w-3 text-center"></i>
+                <span>ป้อนตำแหน่ง รพ.สต.</span>
             </button>
             <button onclick="openSearchModal()" class="bg-white hover:bg-gray-50 text-gray-700 text-xs font-medium py-1.5 px-2.5 border border-gray-300 rounded shadow-sm flex items-center gap-1.5 transition-all font-bold">
                 <i class="fa-solid fa-magnifying-glass-chart text-blue-600 w-3 text-center"></i>
@@ -809,6 +829,64 @@
             }, 200);
         }
 
+        // --- ฟังก์ชันจัดการชื่อ รพ.สต. Modal ---
+        function openRenameHospitalModal(district, oldName) {
+            map.closePopup();
+            document.getElementById('renameHospOld').value = oldName;
+            document.getElementById('renameHospNew').value = oldName;
+            document.getElementById('renameHospDist').value = district;
+            document.getElementById('renameHospitalModal').classList.remove('hidden');
+        }
+
+        function closeRenameHospitalModal() {
+            document.getElementById('renameHospitalModal').classList.add('hidden');
+        }
+
+        function saveRenameHospital() {
+            const oldName = document.getElementById('renameHospOld').value;
+            const newName = document.getElementById('renameHospNew').value.trim();
+            const district = document.getElementById('renameHospDist').value;
+            
+            if (!newName || newName === oldName) {
+                closeRenameHospitalModal();
+                return;
+            }
+
+            // 1. อัปเดตพิกัด รพ.สต. (markers)
+            const hospIndex = hospitalsData.findIndex(h => h.name === oldName && h.district === district);
+            if (hospIndex > -1) {
+                hospitalsData[hospIndex].name = newName;
+                if (window.saveHospitalToCloud) window.saveHospitalToCloud(hospitalsData[hospIndex]);
+            }
+
+            // 2. อัปเดตรายชื่อในฐานข้อมูล (Dropdown lists)
+            if (window.hospitalData && window.hospitalData[district]) {
+                const listIndex = window.hospitalData[district].indexOf(oldName);
+                if (listIndex > -1) {
+                    window.hospitalData[district][listIndex] = newName;
+                }
+            }
+
+            // 3. อัปเดตชื่อในโครงการที่เกี่ยวข้องทั้งหมด
+            let projectsUpdated = 0;
+            projects.forEach(p => {
+                if (p.hospital === oldName && p.district === district) {
+                    p.hospital = newName;
+                    if (window.saveProjectToCloud) window.saveProjectToCloud(p);
+                    projectsUpdated++;
+                }
+            });
+
+            closeRenameHospitalModal();
+            renderMarkers();
+            
+            if (document.getElementById('pDistrict') && document.getElementById('pDistrict').value === district) {
+                updateHospitalList();
+            }
+            
+            showAlert(`เปลี่ยนชื่อเป็น "${newName}" สำเร็จ\n(ระบบอัปเดตชื่อในโครงการที่เกี่ยวข้อง ${projectsUpdated} โครงการให้แล้ว)`);
+        }
+
         // --- Core Variables ---
         let map;
         let projects = [];
@@ -849,7 +927,7 @@
         let userRole = 'viewer'; 
 
         // ฐานข้อมูล รพ.สต. แต่ละอำเภอ
-        const hospitalData = {
+        window.hospitalData = {
             "เมืองพิษณุโลก": ["รพ.สต.บ้านคลอง", "รพ.สต.หัวรอ", "รพ.สต.ท่าทอง", "รพ.สต.อรัญญิก", "รพ.สต.บ้านกร่าง", "รพ.สต.พลายชุมพล", "รพ.สต.บึงพระ", "รพ.สต.วัดจันทร์", "รพ.สต.สมอแข", "รพ.สต.ดอนทอง"],
             "นครไทย": ["รพ.สต.นครไทย", "รพ.สต.เนินเพิ่ม", "รพ.สต.หนองกะท้าว", "รพ.สต.บ้านแยง", "รพ.สต.นาบัว", "รพ.สต.บ่อโพธิ์", "รพ.สต.ยางโกลน", "รพ.สต.ห้วยเฮี้ย", "รพ.สต.บ้านพร้าว", "รพ.สต.น้ำกุ่ม"],
             "ชาติตระการ": ["รพ.สต.ชาติตระการ", "รพ.สต.ป่าแดง", "รพ.สต.บ้านดง", "รพ.สต.สวนเมี่ยง", "รพ.สต.ท่าสะแก", "รพ.สต.บ่อภาค"],
@@ -865,14 +943,22 @@
             initMap();
         };
 
+        window.openModalWithHospital = function(district, hospital) {
+            map.closePopup();
+            openModal();
+            document.getElementById('pDistrict').value = district;
+            updateHospitalList(hospital);
+            document.getElementById('pHospital').value = hospital;
+        };
+
         function updateHospitalList(selectedHospital = "") {
             const district = document.getElementById('pDistrict').value;
             const hospitalSelect = document.getElementById('pHospital');
             hospitalSelect.innerHTML = '<option value="">-- ไม่ระบุ / ไม่ใช่โครงการ รพ.สต. --</option>';
 
-            if (district && hospitalData[district]) {
+            if (district && window.hospitalData[district]) {
                 hospitalSelect.disabled = false;
-                hospitalData[district].forEach(hosp => {
+                window.hospitalData[district].forEach(hosp => {
                     const option = document.createElement('option');
                     option.value = hosp;
                     option.textContent = hosp;
@@ -1187,22 +1273,14 @@
                     // Sort Years Descending
                     const sortedYears = Object.keys(projectsByYear).sort((a,b) => b.localeCompare(a));
 
-                    sortedYears.forEach((year, index) => {
-                        const isOpen = index === 0 ? 'open' : ''; // เปิดแฟ้มปีล่าสุดไว้เป็นค่าเริ่มต้น
+                    sortedYears.forEach(year => {
                         popupHtml += `
-                            <details class="group mb-3 bg-white border border-blue-200 rounded-lg shadow-sm overflow-hidden" ${isOpen}>
-                                <summary class="p-2.5 bg-gradient-to-r from-blue-50 to-indigo-50 font-bold text-blue-800 cursor-pointer flex justify-between items-center hover:from-blue-100 hover:to-indigo-100 transition-colors select-none">
-                                    <span class="flex items-center gap-2 text-xs">
-                                        <i class="fa-solid fa-folder text-blue-500 group-open:hidden text-sm transition-all"></i>
-                                        <i class="fa-solid fa-folder-open text-blue-600 hidden group-open:inline text-sm transition-all"></i>
-                                        แฟ้มปีงบประมาณ ${year}
-                                    </span>
-                                    <div class="flex items-center gap-2">
-                                        <span class="bg-white text-indigo-700 px-2 py-0.5 rounded-full text-[10px] shadow-sm border border-indigo-100">${projectsByYear[year].length} โครงการ</span>
-                                        <i class="fa-solid fa-chevron-down text-blue-400 transition-transform group-open:rotate-180 text-[10px]"></i>
-                                    </div>
+                            <details class="group bg-gray-50 rounded-lg mb-3 overflow-hidden border border-gray-200 shadow-sm" open>
+                                <summary class="bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-1.5 font-bold text-white text-xs flex justify-between items-center shadow cursor-pointer outline-none">
+                                    <span><i class="fa-solid fa-folder-open mr-1"></i> แฟ้มปีงบประมาณ ${year}</span>
+                                    <span class="bg-white text-indigo-700 px-2 py-0.5 rounded-full text-[10px] shadow-sm">${projectsByYear[year].length} โครงการ</span>
                                 </summary>
-                                <div class="p-2 space-y-2 bg-gray-50 border-t border-blue-100">
+                                <div class="p-2 space-y-2 border-t border-blue-100">
                         `;
                         
                         projectsByYear[year].forEach(p => {
@@ -1217,16 +1295,16 @@
                             }
 
                             popupHtml += `
-                                <div class="bg-white p-2.5 rounded-lg border border-gray-200 shadow-sm hover:border-blue-300 transition-colors">
-                                    <div class="font-bold text-gray-800 text-xs mb-1.5 leading-tight" title="${p.name}">• ${p.name}</div>
-                                    <div class="grid grid-cols-2 gap-1.5 text-[10px] bg-gray-50 p-1.5 rounded border border-gray-100 mb-2">
+                                <div class="bg-white p-2 rounded border border-gray-200 shadow-sm hover:border-blue-300 transition-colors">
+                                    <div class="font-bold text-gray-800 text-xs mb-1 line-clamp-2 leading-tight" title="${p.name}">• ${p.name}</div>
+                                    <div class="grid grid-cols-2 gap-1 text-[10px] bg-gray-50 p-1.5 rounded border border-gray-100 mb-1">
                                         <div class="text-gray-500">ประเภท: <span class="font-bold text-gray-700">${p.workType || '-'}</span></div>
                                         <div class="text-gray-500">สถานะ: <span class="${p.status.includes('แล้วเสร็จ') ? 'text-green-600' : 'text-orange-500'} font-bold">${p.status}</span></div>
                                         <div class="text-gray-500">งบ: <span class="font-bold text-blue-600">฿${(p.budget || 0).toLocaleString()}</span></div>
                                         <div class="text-gray-500">สัญญา: <span class="font-bold text-green-600">฿${(p.contractPrice || 0).toLocaleString()}</span></div>
                                     </div>
                                     <div class="flex gap-1.5">
-                                        <button type="button" onclick="openReport('${p.id}')" class="w-full text-[10px] bg-teal-50 text-teal-700 py-1.5 rounded border border-teal-200 hover:bg-teal-100 font-bold shadow-sm transition-colors"><i class="fa-solid fa-print mr-1"></i> พิมพ์รายงานย่อ (PDF)</button>
+                                        <button type="button" onclick="openReport('${p.id}')" class="flex-1 text-[10px] bg-teal-50 text-teal-700 py-1.5 rounded border border-teal-200 hover:bg-teal-100 font-bold"><i class="fa-solid fa-print"></i> พิมพ์ PDF</button>
                                     </div>
                                     ${adminBtns}
                                 </div>
@@ -1235,24 +1313,17 @@
                         popupHtml += `</div></details>`;
                     });
                 }
-
-                if (group.isHospital) {
-                    let adminBtnHtml = '';
-                    if (userRole === 'admin') {
-                        const lat = group.coords[0];
-                        const lng = group.coords[1];
-                        adminBtnHtml = `
-                            <div class="mt-3 pt-3 border-t border-gray-200">
-                                <button type="button" onclick="openModalWithHospital('${group.district}', '${group.title}', ${lat}, ${lng})" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold py-2 px-3 rounded shadow-sm transition-colors flex items-center justify-center gap-1.5">
-                                    <i class="fa-solid fa-folder-plus"></i> เพิ่มโครงการที่นี่
-                                </button>
-                            </div>
-                        `;
-                    }
-                    popupHtml += adminBtnHtml;
-                }
-
+                
                 popupHtml += `</div>`;
+
+                if (group.isHospital && userRole === 'admin') {
+                    popupHtml += `
+                        <div class="flex gap-1.5 mt-2 pt-2 border-t border-gray-100">
+                            <button onclick="openModalWithHospital('${group.district}', '${group.title}')" class="flex-1 text-[11px] bg-blue-600 text-white py-1.5 rounded shadow hover:bg-blue-700 font-bold transition-colors"><i class="fa-solid fa-plus-circle mr-1"></i> เพิ่มโครงการที่นี่</button>
+                            <button onclick="openRenameHospitalModal('${group.district}', '${group.title}')" class="text-[11px] bg-gray-100 text-gray-700 px-3 py-1.5 rounded shadow-sm hover:bg-gray-200 font-bold transition-colors border border-gray-300"><i class="fa-solid fa-pen"></i> แก้ไขชื่อ</button>
+                        </div>
+                    `;
+                }
 
                 if (group.isHospital) {
                     const hospitalIcon = L.divIcon({
@@ -1353,34 +1424,6 @@
             });
         }
         function removeImage(idx) { activeImages.splice(idx, 1); renderImagePreviews(); }
-
-        window.openModalWithHospital = function(district, hospitalName, lat, lng) {
-            openModal(); // เรียกใช้ฟังก์ชันเดิมเพื่อเปิด Modal และเคลียร์ฟอร์ม
-            
-            // 1. กรอกอำเภอและ รพ.สต. ให้อัตโนมัติ
-            const distSelect = document.getElementById('pDistrict');
-            distSelect.value = district;
-            updateHospitalList(hospitalName);
-            
-            // 2. กรอกพิกัดให้อัตโนมัติ
-            if (lat !== undefined && lng !== undefined) {
-                document.getElementById('segmentsContainer').innerHTML = ''; 
-                activeSegmentsData = {}; 
-                segmentCounter = 0;
-                addSegmentRow('พิกัดที่ตั้ง ' + hospitalName);
-                
-                const id = `seg_1`;
-                const row = document.querySelector(`[data-seg-id="${id}"]`);
-                if (row) {
-                    row.querySelector('.lat-input').value = lat;
-                    row.querySelector('.lng-input').value = lng;
-                    manualCoordUpdate(id, 'point');
-                }
-            }
-            
-            // ปิด Popup แผนที่เดิม
-            if (map) map.closePopup();
-        };
 
         function openModal() { 
             editingProjectId = null;
@@ -1799,9 +1842,9 @@
             const district = document.getElementById('hospDistrict').value;
             const select = document.getElementById('hospName');
             select.innerHTML = '<option value="" disabled selected>-- เลือก รพ.สต. --</option>';
-            if(district && hospitalData[district]) {
+            if(district && window.hospitalData[district]) {
                 select.disabled = false;
-                hospitalData[district].forEach(hosp => {
+                window.hospitalData[district].forEach(hosp => {
                     select.innerHTML += `<option value="${hosp}">${hosp}</option>`;
                 });
             } else {
@@ -2087,13 +2130,6 @@
         }
         function closeReportV124() { document.body.classList.remove('printing-v124'); const rptModal = document.getElementById('reportV124Modal'); rptModal.classList.remove('flex'); rptModal.classList.add('hidden'); }
 
-        function openFolder(id) {
-            const p = projects.find(proj => proj.id.toString() === id.toString());
-            if (!p) return;
-            // จำลองการเปิด/สร้างโฟลเดอร์สำหรับเอกสาร
-            showAlert(`ระบบกำลังจำลองการสร้าง/เปิดพื้นที่จัดเก็บเอกสารสำหรับ:\n\nแฟ้มโครงการ: ${p.name}\nปีงบประมาณ: ${p.year}\n\n(หมายเหตุ: การสร้างโฟลเดอร์จัดเก็บไฟล์เอกสารจริง ต้องใช้การเชื่อมต่อกับระบบ Backend Server หรือ Cloud Storage เช่น Google Drive API)`);
-        }
-
         function openAnalysisModal() {
             const distSet = new Set(); projects.forEach(p => { if (p.district && p.district !== '-') distSet.add(p.district); });
             const distSelect = document.getElementById('analysisDistrictFilter'); distSelect.innerHTML = '<option value="all">ทุกอำเภอ</option>';
@@ -2315,7 +2351,7 @@
         import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // ใช้ Firebase Config ของโปรเจกต์ toon-civil-gis
+        // Firebase Config ของโปรเจกต์ toon-civil-gis
         const firebaseConfig = {
             apiKey: "AIzaSyDxFfXCG5looRXmriLgGmCSHDpo2_6voBU",
             authDomain: "toon-civil-gis.firebaseapp.com",
@@ -2331,10 +2367,8 @@
         if (app) {
             const auth = getAuth(app); 
             const db = getFirestore(app); 
-            // กำหนด Collection Name เป็นชื่อแอปหรือชื่อที่ต้องการ
-            const appId = 'toon-civil-app';
-            
-            window.firebaseDB = db; window.appId = appId; window.currentUser = null;
+            window.firebaseDB = db; 
+            window.currentUser = null;
 
             window.saveProjectToCloud = async function(projectData) {
                 if (!window.currentUser) return;
@@ -2342,7 +2376,7 @@
                 try {
                     const projRef = doc(db, 'projects', projId);
                     await setDoc(projRef, projectData);
-                } catch (error) { console.error("Save Error:", error); showAlert("เกิดข้อผิดพลาดในการบันทึกข้อมูลคลาวด์: " + error.message); }
+                } catch (error) { console.error("Save Error:", error); showAlert("เกิดข้อผิดพลาดในการบันทึกข้อมูลคลาวด์"); }
             };
 
             window.deleteProjectFromCloud = async function(projId) {
@@ -2350,7 +2384,7 @@
                 try {
                     const projRef = doc(db, 'projects', projId.toString());
                     await deleteDoc(projRef);
-                } catch (error) { console.error("Delete Error:", error); showAlert("เกิดข้อผิดพลาดในการลบข้อมูลคลาวด์: " + error.message); }
+                } catch (error) { console.error("Delete Error:", error); showAlert("เกิดข้อผิดพลาดในการลบข้อมูลคลาวด์"); }
             };
 
             window.saveHospitalToCloud = async function(hospData) {
@@ -2364,9 +2398,8 @@
             async function initAuth() {
                 try {
                     await signInAnonymously(auth);
-                } catch(error) {
+                } catch (error) {
                     console.error("Auth Error:", error);
-                    showAlert("ไม่สามารถเชื่อมต่อระบบยืนยันตัวตนได้: " + error.message);
                 }
             }
 
@@ -2374,13 +2407,14 @@
             onAuthStateChanged(auth, (user) => {
                 window.currentUser = user;
                 if (user) {
+                    // รับข้อมูล Projects
                     const projectsRef = collection(db, 'projects');
                     onSnapshot(projectsRef, (snapshot) => {
                         const fetchedProjects = []; snapshot.forEach((doc) => { fetchedProjects.push({ id: doc.id, ...doc.data() }); });
                         if(window.updateProjectsFromCloud) { window.updateProjectsFromCloud(fetchedProjects); }
                     }, (error) => { console.error("Firestore Listen Error:", error); });
 
-                    // รับข้อมูล รพ.สต. จาก Cloud
+                    // รับข้อมูล รพ.สต.
                     const hospitalsRef = collection(db, 'hospitals');
                     onSnapshot(hospitalsRef, (snapshot) => {
                         hospitalsData = [];
