@@ -1334,16 +1334,18 @@
                                </div>`,
                         iconSize: [32, 32], iconAnchor: [16, 16]
                     });
-                    const m = L.marker(group.coords, {icon: hospitalIcon}).addTo(map).bindPopup(popupHtml, {maxWidth: 320});
+                    const tooltipText = `<div class="text-center leading-tight"><span class="block text-[13px] text-red-700 font-bold">${group.title}</span><span class="block text-[10px] text-gray-500">อ.${group.district}</span></div>`;
+                    const m = L.marker(group.coords, {icon: hospitalIcon}).addTo(map).bindPopup(popupHtml, {maxWidth: 320}).bindTooltip(tooltipText, {direction: 'top', offset: [0, -10]});
                     markers.push(m);
                 } else {
+                    const tooltipText = `<div class="text-center leading-tight"><span class="block text-[13px] text-blue-800 font-bold">${group.title}</span><span class="block text-[10px] text-gray-500">อ.${group.district}</span></div>`;
                     if (group.geomType === 'line') {
                         group.segments.forEach((s) => {
                             if (s.coordinates && s.coordinates.length >= 2) {
                                 const dashArray = group.lineStyle === 'dashed' ? '10, 10' : null;
                                 const polyline = L.polyline(s.coordinates, {
                                     color: group.color, weight: group.weight, dashArray: dashArray
-                                }).addTo(map).bindPopup(popupHtml, {maxWidth: 320});
+                                }).addTo(map).bindPopup(popupHtml, {maxWidth: 320}).bindTooltip(tooltipText, {direction: 'top', sticky: true});
                                 markers.push(polyline);
                                 const m1 = L.circleMarker(s.coordinates[0], { radius: 4, color: group.color, fillColor: 'white', fillOpacity: 1, weight: 2 }).addTo(map);
                                 const m2 = L.circleMarker(s.coordinates[s.coordinates.length-1], { radius: 4, color: group.color, fillColor: 'white', fillOpacity: 1, weight: 2 }).addTo(map);
@@ -1357,7 +1359,7 @@
                                 html: `<div style="background-color: ${group.color}; color: white; width: 24px; height: 24px; border-radius: 50%; border: 2px solid white; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.4);">${idx+1}</div>`,
                                 iconSize: [24, 24], iconAnchor: [12, 12]
                             });
-                            const m = L.marker(s.coordinates, {icon: customIcon}).addTo(map).bindPopup(popupHtml, {maxWidth: 320});
+                            const m = L.marker(s.coordinates, {icon: customIcon}).addTo(map).bindPopup(popupHtml, {maxWidth: 320}).bindTooltip(tooltipText, {direction: 'top', offset: [0, -10]});
                             markers.push(m);
                         });
                     }
@@ -1463,80 +1465,126 @@
                 document.getElementById('searchModal').classList.remove('hidden'); return;
             }
             
-            const groupedProjects = {};
+            const grouped = {};
             projects.forEach(p => {
                 const dist = p.district || 'ไม่ได้ระบุอำเภอ';
-                if (!groupedProjects[dist]) groupedProjects[dist] = [];
-                groupedProjects[dist].push(p);
+                const hosp = p.hospital || 'โครงการอื่นๆ (ไม่ระบุ รพ.สต.)';
+                const year = p.year || 'ไม่ได้ระบุปี';
+                const bType = p.budgetType || 'ไม่ระบุประเภทงบ';
+                
+                if(!grouped[dist]) grouped[dist] = {};
+                if(!grouped[dist][hosp]) grouped[dist][hosp] = {};
+                if(!grouped[dist][hosp][year]) grouped[dist][hosp][year] = {};
+                if(!grouped[dist][hosp][year][bType]) grouped[dist][hosp][year][bType] = [];
+                
+                grouped[dist][hosp][year][bType].push(p);
             });
 
-            for (const [district, districtProjects] of Object.entries(groupedProjects)) {
-                let html = `
+            let html = '';
+            const sortedDists = Object.keys(grouped).sort();
+            for (const dist of sortedDists) {
+                html += `
                 <details class="group mb-3 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden" open>
-                    <summary class="p-4 bg-blue-50 font-bold text-blue-800 cursor-pointer flex justify-between items-center hover:bg-blue-100 transition-colors">
-                        <span class="flex items-center gap-2"><i class="fa-solid fa-map-location-dot"></i> อำเภอ${district} 
-                        <span class="text-xs bg-blue-200 text-blue-800 px-2 py-0.5 rounded-full font-bold">${districtProjects.length} โครงการ</span></span>
-                        <i class="fa-solid fa-chevron-down transition-transform group-open:rotate-180 text-blue-500"></i>
+                    <summary class="p-3 bg-blue-600 font-bold text-white cursor-pointer flex justify-between items-center hover:bg-blue-700 transition-colors">
+                        <span class="flex items-center gap-2"><i class="fa-solid fa-map-location-dot"></i> อำเภอ${dist}</span>
+                        <i class="fa-solid fa-chevron-down transition-transform group-open:rotate-180 text-blue-200"></i>
                     </summary>
-                    <div class="p-4 bg-white space-y-3 border-t border-blue-100">`;
+                    <div class="p-3 bg-white space-y-3 border-t border-gray-100 pl-4 border-l-4 border-l-blue-300">`;
 
-                districtProjects.forEach(p => { 
-                    const hasGis = p.segments && p.segments.length > 0;
-                    const hasActs = p.activities && p.activities.length > 0;
-                    const hasImgs = p.images && p.images.length > 0;
-                    let mapBtn = '';
-                    
-                    if (hasGis) {
-                        const firstCoord = p.geomType === 'line' ? p.segments[0].coordinates[0] : p.segments[0].coordinates;
-                        mapBtn = `<button type="button" onclick="map.setView([${firstCoord[0]}, ${firstCoord[1]}], 15); closeSearchModal();" class="w-7 h-7 flex items-center justify-center bg-blue-50 text-blue-600 rounded hover:bg-blue-100" title="ดูแผนที่"><i class="fa-solid fa-location-dot"></i></button>`;
-                    }
-
-                    let actionBtnsGrid = '';
-                    if (userRole === 'admin') {
-                        actionBtnsGrid = `
-                            <div class="grid grid-cols-2 gap-1.5 h-full min-w-[70px]">
-                                <div class="flex flex-col gap-1.5">${mapBtn}
-                                    <button type="button" onclick="openProgressModal('${p.id}')" class="w-7 h-7 flex items-center justify-center bg-emerald-50 text-emerald-600 rounded border border-emerald-200 hover:bg-emerald-100" title="อัปเดตผลงานจริง"><i class="fa-solid fa-bars-progress"></i></button>
-                                </div>
-                                <div class="flex flex-col gap-1.5">
-                                    <button type="button" onclick="editProject('${p.id}')" class="w-7 h-7 flex items-center justify-center bg-orange-50 text-orange-600 rounded border border-orange-200 hover:bg-orange-100" title="แก้ไขรายละเอียด/แผนงาน"><i class="fa-solid fa-pen-to-square"></i></button>
-                                    <button type="button" onclick="openReport('${p.id}')" class="w-7 h-7 flex items-center justify-center bg-teal-50 text-teal-600 rounded border border-teal-200 hover:bg-teal-100" title="พิมพ์รายงานภาพรวม (PDF)"><i class="fa-solid fa-print"></i></button>
-                                    <button type="button" onclick="openReportV124('${p.id}')" class="w-7 h-7 flex items-center justify-center bg-purple-50 text-purple-600 rounded border border-purple-200 hover:bg-purple-100" title="พิมพ์แบบฟอร์ม S-Curve (ว124)"><i class="fa-solid fa-file-invoice"></i></button>
-                                    <button type="button" onclick="confirmDeleteProject('${p.id}')" class="w-7 h-7 flex items-center justify-center bg-red-50 text-red-600 rounded border border-red-200 hover:bg-red-100" title="ลบโครงการ"><i class="fa-solid fa-trash"></i></button>
-                                </div>
-                            </div>`;
-                    } else {
-                        actionBtnsGrid = `
-                            <div class="grid grid-cols-1 gap-1.5 h-full min-w-[35px]">${mapBtn}
-                                <button type="button" onclick="openReport('${p.id}')" class="w-7 h-7 flex items-center justify-center bg-teal-50 text-teal-600 rounded border border-teal-200 hover:bg-teal-100" title="พิมพ์รายงานภาพรวม (PDF)"><i class="fa-solid fa-print"></i></button>
-                                <button type="button" onclick="openReportV124('${p.id}')" class="w-7 h-7 flex items-center justify-center bg-purple-50 text-purple-600 rounded border border-purple-200 hover:bg-purple-100" title="พิมพ์แบบฟอร์ม S-Curve (ว124)"><i class="fa-solid fa-file-invoice"></i></button>
-                            </div>`;
-                    }
-
+                const sortedHosps = Object.keys(grouped[dist]).sort();
+                for (const hosp of sortedHosps) {
                     html += `
-                    <div class="p-3 border border-gray-200 rounded-lg bg-gray-50 hover:border-blue-300 transition-all flex flex-col gap-2 shadow-sm">
-                        <div class="flex justify-between items-start">
-                            <div class="flex-1 pr-2">
-                                <h3 class="font-bold text-sm text-blue-800 leading-tight">${p.name}</h3>
-                                <div class="grid grid-cols-2 gap-y-1.5 gap-x-2 text-[11px] mt-2">
-                                    <div class="text-gray-600"><span class="text-gray-400 font-normal">รพ.สต.:</span> <span class="font-bold text-red-600">${p.hospital || '-'}</span></div>
-                                    <div class="text-gray-600"><span class="text-gray-400 font-normal">ประเภทงาน:</span> <span class="font-bold">${p.workType || '-'}</span></div>
-                                    <div class="text-gray-600"><span class="text-gray-400 font-normal">ปีงบประมาณ:</span> <span class="font-bold">${p.year || '-'}</span></div>
-                                    <div class="text-gray-600"><span class="text-gray-400 font-normal">งบประมาณ:</span> <span class="font-bold text-blue-600">฿${(p.budget || 0).toLocaleString()}</span></div>
-                                    <div class="text-gray-600"><span class="text-gray-400 font-normal">สถานะ:</span> <span class="font-bold ${p.status && p.status.includes('แล้วเสร็จ') ? 'text-green-600' : 'text-orange-500'}">${p.status || 'รอดำเนินการ'}</span></div>
-                                </div>
-                                <div class="flex flex-wrap gap-2 mt-2.5">
-                                    ${hasGis ? `<span class="text-[9px] bg-green-100 text-green-700 px-2 py-0.5 rounded border border-green-200"><i class="fa-solid fa-map-pin"></i> ${p.geomType==='line' ? 'แบบเส้น' : 'แบบจุด'}</span>` : '<span class="text-[9px] bg-gray-200 text-gray-500 px-2 py-0.5 rounded border border-gray-300"><i class="fa-solid fa-map-pin"></i> ไม่มีพิกัด</span>'}
-                                    ${hasActs ? `<span class="text-[9px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded border border-indigo-200"><i class="fa-solid fa-tasks"></i> มีแผนงาน</span>` : '<span class="text-[9px] bg-gray-200 text-gray-500 px-2 py-0.5 rounded border border-gray-300"><i class="fa-solid fa-tasks"></i> ไม่มีแผนงาน</span>'}
-                                    ${hasImgs ? `<span class="text-[9px] bg-pink-100 text-pink-700 px-2 py-0.5 rounded border border-pink-200"><i class="fa-solid fa-images"></i> ${p.images.length} รูป</span>` : ''}
-                                </div>
-                            </div>
-                            ${actionBtnsGrid}
-                        </div>
-                    </div>`; 
-                });
-                html += `</div></details>`; container.innerHTML += html;
+                    <details class="group bg-gray-50 border border-gray-200 rounded-lg shadow-sm overflow-hidden mb-2" open>
+                        <summary class="p-2.5 bg-rose-50 font-bold text-rose-700 cursor-pointer flex justify-between items-center hover:bg-rose-100 transition-colors">
+                            <span class="flex items-center gap-2"><i class="fa-solid fa-house-medical"></i> ${hosp}</span>
+                            <i class="fa-solid fa-chevron-down transition-transform group-open:rotate-180 text-rose-300"></i>
+                        </summary>
+                        <div class="p-3 bg-white space-y-3 border-t border-gray-100 pl-4 border-l-4 border-l-rose-300">`;
+
+                    const sortedYears = Object.keys(grouped[dist][hosp]).sort((a,b) => b.localeCompare(a));
+                    for (const year of sortedYears) {
+                        html += `
+                        <details class="group bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden mb-2" open>
+                            <summary class="p-2 bg-indigo-50 font-bold text-indigo-700 cursor-pointer flex justify-between items-center hover:bg-indigo-100 transition-colors text-sm">
+                                <span class="flex items-center gap-2"><i class="fa-solid fa-folder-open"></i> ปีงบประมาณ ${year}</span>
+                                <i class="fa-solid fa-chevron-down transition-transform group-open:rotate-180 text-indigo-300"></i>
+                            </summary>
+                            <div class="p-2.5 bg-white space-y-2 border-t border-gray-100 pl-4 border-l-4 border-l-indigo-300">`;
+
+                        const sortedBTypes = Object.keys(grouped[dist][hosp][year]).sort();
+                        for (const bType of sortedBTypes) {
+                            html += `
+                            <details class="group bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden mb-2" open>
+                                <summary class="p-1.5 bg-orange-50 font-bold text-orange-700 cursor-pointer flex justify-between items-center hover:bg-orange-100 transition-colors text-xs">
+                                    <span class="flex items-center gap-2"><i class="fa-solid fa-coins"></i> งบ${bType}</span>
+                                    <i class="fa-solid fa-chevron-down transition-transform group-open:rotate-180 text-orange-300"></i>
+                                </summary>
+                                <div class="p-2 bg-gray-50 space-y-2 border-t border-gray-100">`;
+
+                            grouped[dist][hosp][year][bType].forEach(p => { 
+                                const hasGis = p.segments && p.segments.length > 0;
+                                const hasActs = p.activities && p.activities.length > 0;
+                                const hasImgs = p.images && p.images.length > 0;
+                                let mapBtn = '';
+                                
+                                if (hasGis) {
+                                    const firstCoord = p.geomType === 'line' ? p.segments[0].coordinates[0] : p.segments[0].coordinates;
+                                    mapBtn = `<button type="button" onclick="map.setView([${firstCoord[0]}, ${firstCoord[1]}], 15); closeSearchModal();" class="w-7 h-7 flex items-center justify-center bg-blue-50 text-blue-600 rounded hover:bg-blue-100" title="ดูแผนที่"><i class="fa-solid fa-location-dot"></i></button>`;
+                                }
+
+                                let actionBtnsGrid = '';
+                                if (userRole === 'admin') {
+                                    actionBtnsGrid = `
+                                        <div class="grid grid-cols-2 gap-1.5 h-full min-w-[70px]">
+                                            <div class="flex flex-col gap-1.5">${mapBtn}
+                                                <button type="button" onclick="openProgressModal('${p.id}')" class="w-7 h-7 flex items-center justify-center bg-emerald-50 text-emerald-600 rounded border border-emerald-200 hover:bg-emerald-100" title="อัปเดตผลงานจริง"><i class="fa-solid fa-bars-progress"></i></button>
+                                            </div>
+                                            <div class="flex flex-col gap-1.5">
+                                                <button type="button" onclick="editProject('${p.id}')" class="w-7 h-7 flex items-center justify-center bg-orange-50 text-orange-600 rounded border border-orange-200 hover:bg-orange-100" title="แก้ไขรายละเอียด/แผนงาน"><i class="fa-solid fa-pen-to-square"></i></button>
+                                                <button type="button" onclick="openReport('${p.id}')" class="w-7 h-7 flex items-center justify-center bg-teal-50 text-teal-600 rounded border border-teal-200 hover:bg-teal-100" title="พิมพ์รายงานภาพรวม (PDF)"><i class="fa-solid fa-print"></i></button>
+                                                <button type="button" onclick="openReportV124('${p.id}')" class="w-7 h-7 flex items-center justify-center bg-purple-50 text-purple-600 rounded border border-purple-200 hover:bg-purple-100" title="พิมพ์แบบฟอร์ม S-Curve (ว124)"><i class="fa-solid fa-file-invoice"></i></button>
+                                                <button type="button" onclick="confirmDeleteProject('${p.id}')" class="w-7 h-7 flex items-center justify-center bg-red-50 text-red-600 rounded border border-red-200 hover:bg-red-100" title="ลบโครงการ"><i class="fa-solid fa-trash"></i></button>
+                                            </div>
+                                        </div>`;
+                                } else {
+                                    actionBtnsGrid = `
+                                        <div class="grid grid-cols-1 gap-1.5 h-full min-w-[35px]">${mapBtn}
+                                            <button type="button" onclick="openReport('${p.id}')" class="w-7 h-7 flex items-center justify-center bg-teal-50 text-teal-600 rounded border border-teal-200 hover:bg-teal-100" title="พิมพ์รายงานภาพรวม (PDF)"><i class="fa-solid fa-print"></i></button>
+                                            <button type="button" onclick="openReportV124('${p.id}')" class="w-7 h-7 flex items-center justify-center bg-purple-50 text-purple-600 rounded border border-purple-200 hover:bg-purple-100" title="พิมพ์แบบฟอร์ม S-Curve (ว124)"><i class="fa-solid fa-file-invoice"></i></button>
+                                        </div>`;
+                                }
+
+                                html += `
+                                <div class="p-3 border border-gray-200 rounded-lg bg-white hover:border-blue-400 transition-all flex flex-col gap-2 shadow-sm">
+                                    <div class="flex justify-between items-start">
+                                        <div class="flex-1 pr-2">
+                                            <h3 class="font-bold text-sm text-blue-800 leading-tight">${p.name}</h3>
+                                            <div class="grid grid-cols-2 gap-y-1.5 gap-x-2 text-[11px] mt-2">
+                                                <div class="text-gray-600"><span class="text-gray-400 font-normal">ประเภทงาน:</span> <span class="font-bold">${p.workType || '-'}</span></div>
+                                                <div class="text-gray-600"><span class="text-gray-400 font-normal">สถานะ:</span> <span class="font-bold ${p.status && p.status.includes('แล้วเสร็จ') ? 'text-green-600' : 'text-orange-500'}">${p.status || 'รอดำเนินการ'}</span></div>
+                                                <div class="text-gray-600"><span class="text-gray-400 font-normal">งบประมาณ:</span> <span class="font-bold text-blue-600">฿${(p.budget || 0).toLocaleString()}</span></div>
+                                                <div class="text-gray-600"><span class="text-gray-400 font-normal">สัญญา:</span> <span class="font-bold text-green-600">฿${(p.contractPrice || 0).toLocaleString()}</span></div>
+                                            </div>
+                                            <div class="flex flex-wrap gap-2 mt-2.5">
+                                                ${hasGis ? `<span class="text-[9px] bg-green-100 text-green-700 px-2 py-0.5 rounded border border-green-200"><i class="fa-solid fa-map-pin"></i> ${p.geomType==='line' ? 'แบบเส้น' : 'แบบจุด'}</span>` : '<span class="text-[9px] bg-gray-200 text-gray-500 px-2 py-0.5 rounded border border-gray-300"><i class="fa-solid fa-map-pin"></i> ไม่มีพิกัด</span>'}
+                                                ${hasActs ? `<span class="text-[9px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded border border-indigo-200"><i class="fa-solid fa-tasks"></i> มีแผนงาน</span>` : '<span class="text-[9px] bg-gray-200 text-gray-500 px-2 py-0.5 rounded border border-gray-300"><i class="fa-solid fa-tasks"></i> ไม่มีแผนงาน</span>'}
+                                                ${hasImgs ? `<span class="text-[9px] bg-pink-100 text-pink-700 px-2 py-0.5 rounded border border-pink-200"><i class="fa-solid fa-images"></i> ${p.images.length} รูป</span>` : ''}
+                                            </div>
+                                        </div>
+                                        ${actionBtnsGrid}
+                                    </div>
+                                </div>`; 
+                            });
+
+                            html += `</div></details>`;
+                        }
+                        html += `</div></details>`;
+                    }
+                    html += `</div></details>`;
+                }
+                html += `</div></details>`;
             }
+            container.innerHTML = html;
             document.getElementById('searchModal').classList.remove('hidden'); 
         }
 
@@ -2352,7 +2400,7 @@
         import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Config ของโปรเจกต์ toon-civil-gis
+        // ใช้ Firebase Config ของโปรเจกต์ toon-civil-gis (ฮาร์ดโค้ดเพื่อเชื่อมต่อฐานข้อมูลจริงของคุณ)
         const firebaseConfig = {
             apiKey: "AIzaSyDxFfXCG5looRXmriLgGmCSHDpo2_6voBU",
             authDomain: "toon-civil-gis.firebaseapp.com",
@@ -2373,27 +2421,40 @@
 
             window.saveProjectToCloud = async function(projectData) {
                 if (!window.currentUser) return;
-                const isNew = !projectData.id; const projId = isNew ? Date.now().toString() : projectData.id.toString(); projectData.id = projId;
+                const isNew = !projectData.id; 
+                const projId = isNew ? Date.now().toString() : projectData.id.toString(); 
+                projectData.id = projId;
                 try {
+                    // บันทึกลง Collection 'projects' ในฐานข้อมูลของคุณ
                     const projRef = doc(db, 'projects', projId);
                     await setDoc(projRef, projectData);
-                } catch (error) { console.error("Save Error:", error); showAlert("เกิดข้อผิดพลาดในการบันทึกข้อมูลคลาวด์"); }
+                } catch (error) { 
+                    console.error("Save Error:", error); 
+                    showAlert("เกิดข้อผิดพลาดในการบันทึกข้อมูลคลาวด์"); 
+                }
             };
 
             window.deleteProjectFromCloud = async function(projId) {
                 if (!window.currentUser) return;
                 try {
+                    // ลบจาก Collection 'projects' ในฐานข้อมูลของคุณ
                     const projRef = doc(db, 'projects', projId.toString());
                     await deleteDoc(projRef);
-                } catch (error) { console.error("Delete Error:", error); showAlert("เกิดข้อผิดพลาดในการลบข้อมูลคลาวด์"); }
+                } catch (error) { 
+                    console.error("Delete Error:", error); 
+                    showAlert("เกิดข้อผิดพลาดในการลบข้อมูลคลาวด์"); 
+                }
             };
 
             window.saveHospitalToCloud = async function(hospData) {
                 if (!window.currentUser) return;
                 try {
+                    // บันทึกลง Collection 'hospitals' ในฐานข้อมูลของคุณ
                     const ref = doc(db, 'hospitals', hospData.id);
                     await setDoc(ref, hospData);
-                } catch(e) { console.error("Save Hosp Error:", e); }
+                } catch(e) { 
+                    console.error("Save Hosp Error:", e); 
+                }
             };
 
             async function initAuth() {
@@ -2405,23 +2466,33 @@
             }
 
             initAuth();
+            
             onAuthStateChanged(auth, (user) => {
                 window.currentUser = user;
                 if (user) {
-                    // รับข้อมูล Projects
+                    // ดึงข้อมูลโครงการทั้งหมดจาก Collection 'projects'
                     const projectsRef = collection(db, 'projects');
                     onSnapshot(projectsRef, (snapshot) => {
-                        const fetchedProjects = []; snapshot.forEach((doc) => { fetchedProjects.push({ id: doc.id, ...doc.data() }); });
-                        if(window.updateProjectsFromCloud) { window.updateProjectsFromCloud(fetchedProjects); }
-                    }, (error) => { console.error("Firestore Listen Error:", error); });
+                        const fetchedProjects = []; 
+                        snapshot.forEach((doc) => { 
+                            fetchedProjects.push({ id: doc.id, ...doc.data() }); 
+                        });
+                        if(window.updateProjectsFromCloud) { 
+                            window.updateProjectsFromCloud(fetchedProjects); 
+                        }
+                    }, (error) => { 
+                        console.error("Firestore Listen Error:", error); 
+                    });
 
-                    // รับข้อมูล รพ.สต.
+                    // ดึงข้อมูลพิกัด รพ.สต. จาก Collection 'hospitals'
                     const hospitalsRef = collection(db, 'hospitals');
                     onSnapshot(hospitalsRef, (snapshot) => {
                         hospitalsData = [];
                         snapshot.forEach(doc => hospitalsData.push({ id: doc.id, ...doc.data() }));
-                        renderMarkers(); // รีโหลดพิกัด รพ.สต. บนแผนที่
-                    }, (error) => { console.error("Firestore Listen Hosp Error:", error); });
+                        renderMarkers(); // รีโหลดพิกัด รพ.สต. บนแผนที่เมื่อมีข้อมูลใหม่
+                    }, (error) => { 
+                        console.error("Firestore Listen Hosp Error:", error); 
+                    });
                 }
             });
         }
