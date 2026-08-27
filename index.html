@@ -41,13 +41,11 @@
         details[open] summary ~ * { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Animation for Hospital Markers */
+        /* Hospital Markers: static to avoid distracting blinking */
         .custom-hospital-marker { z-index: 1000 !important; }
-        .custom-hospital-marker > div { animation: pulse-shadow 2s infinite; }
-        @keyframes pulse-shadow {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        .custom-hospital-marker > div {
+            animation: none !important;
+            box-shadow: 0 3px 10px rgba(127, 29, 29, 0.35);
         }
 
         /* สำหรับการพิมพ์รายงาน PDF */
@@ -386,20 +384,42 @@
                             </div>
                         </div>
 
-                        <!-- 5. ผู้ควบคุมงาน -->
+                        <!-- 5. ข้อมูลคู่สัญญาและคณะกรรมการตรวจรับ -->
+                        <div class="col-span-1 md:col-span-2 p-4 bg-cyan-50 rounded-lg border border-cyan-200 shadow-sm">
+                            <label class="block text-sm font-bold text-cyan-900 mb-3">5. ข้อมูลคู่สัญญาและคณะกรรมการตรวจรับ</label>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-600 mb-1">เลขที่สัญญา</label>
+                                    <input type="text" id="pContractNo" class="w-full px-3 py-2 border border-cyan-200 rounded-md focus:ring-2 focus:ring-cyan-500 bg-white" placeholder="เช่น 1/2569">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-600 mb-1">ผู้รับจ้าง</label>
+                                    <input type="text" id="pContractor" class="w-full px-3 py-2 border border-cyan-200 rounded-md focus:ring-2 focus:ring-cyan-500 bg-white" placeholder="ชื่อบริษัท ห้างหุ้นส่วน หรือบุคคล">
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center mb-2 pt-3 border-t border-cyan-200">
+                                <label class="block text-xs font-bold text-cyan-900">คณะกรรมการตรวจรับ</label>
+                                <button type="button" onclick="window.addCommitteeRow()" class="text-[11px] bg-cyan-700 text-white px-2.5 py-1.5 rounded shadow-sm hover:bg-cyan-800 font-bold"><i class="fa-solid fa-user-plus"></i> เพิ่มกรรมการ</button>
+                            </div>
+                            <div id="committeeContainer" class="space-y-2 bg-white p-3 rounded-lg border border-cyan-200 min-h-[50px]">
+                                <p class="text-xs text-gray-400 italic text-center p-2">ยังไม่มีข้อมูลคณะกรรมการตรวจรับ</p>
+                            </div>
+                        </div>
+
+                        <!-- 6. ผู้ควบคุมงาน -->
                         <div id="supervisorsSection" class="col-span-1 md:col-span-2 p-4 bg-yellow-50 rounded-lg border border-yellow-200 shadow-sm hidden transition-all">
                             <div class="flex justify-between items-center mb-3">
-                                <label class="block text-sm font-bold text-yellow-800">5. ผู้ควบคุมงาน</label>
+                                <label class="block text-sm font-bold text-yellow-800">6. ผู้ควบคุมงาน</label>
                                 <button type="button" onclick="window.addSupervisorRow()" class="text-[11px] bg-yellow-600 text-white px-2.5 py-1.5 rounded shadow-sm hover:bg-yellow-700 font-bold transition-all"><i class="fa-solid fa-user-plus"></i> เพิ่มผู้ควบคุมงาน</button>
                             </div>
                             <div id="supervisorsContainer" class="space-y-2 bg-white p-3 rounded-lg border border-yellow-200 min-h-[50px]">
                             </div>
                         </div>
 
-                        <!-- 6. ส่วนเสริม ข้อมูลพิกัดและแผนงาน -->
+                        <!-- 7. ส่วนเสริม ข้อมูลพิกัดและแผนงาน -->
                         <details class="col-span-1 md:col-span-2 mt-2 bg-indigo-50 border border-indigo-200 rounded-lg shadow-sm" open>
                             <summary class="font-bold text-indigo-800 p-4 cursor-pointer hover:bg-indigo-100 rounded-lg flex justify-between items-center transition-colors">
-                                <span><i class="fa-solid fa-map-location-dot mr-2"></i> 6. ข้อมูลเพิ่มเติม (พิกัด GIS และ แผนงาน S-Curve)</span>
+                                <span><i class="fa-solid fa-map-location-dot mr-2"></i> 7. ข้อมูลเพิ่มเติม (พิกัด GIS และ แผนงาน S-Curve)</span>
                                 <span class="text-xs font-normal text-indigo-500"><i class="fa-solid fa-chevron-down"></i> กดเพื่อเปิด/ปิด</span>
                             </summary>
                             <div class="p-5 border-t border-indigo-200 bg-white rounded-b-lg space-y-6">
@@ -467,10 +487,10 @@
                             </div>
                         </details>
 
-                        <!-- 7. ระบบแนบรูปภาพหน้างาน -->
+                        <!-- 8. ระบบแนบรูปภาพหน้างาน -->
                         <div class="col-span-1 md:col-span-2 p-4 bg-white rounded-lg border border-gray-200 shadow-sm mt-2">
                             <div class="flex justify-between items-center mb-3">
-                                <label class="block text-sm font-bold text-blue-800">7. รูปภาพหน้างาน (Image Gallery)</label>
+                                <label class="block text-sm font-bold text-blue-800">8. รูปภาพหน้างาน (Image Gallery)</label>
                                 <button type="button" onclick="document.getElementById('imageUploadInput').click()" class="text-[11px] bg-blue-100 text-blue-700 px-3 py-1.5 rounded font-bold hover:bg-blue-200 transition-colors border border-blue-300 shadow-sm"><i class="fa-solid fa-image mr-1"></i> อัปโหลดรูปภาพ</button>
                                 <input type="file" id="imageUploadInput" multiple accept="image/*" class="hidden" onchange="window.handleImageUpload(this)">
                             </div>
@@ -505,7 +525,11 @@
                                 <label class="block text-sm font-bold text-gray-700 mb-1 text-center w-full">ลำดับที่</label>
                                 <input type="number" id="sOrder" class="w-full px-3 py-2 border border-gray-300 rounded-md text-center bg-blue-50 font-bold text-blue-700" value="1">
                             </div>
-                            <div class="md:col-span-7">
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-bold text-gray-700 mb-1 text-center w-full">ปีที่ประสานแผน (พ.ศ.) <span class="text-red-500">*</span></label>
+                                <input type="text" inputmode="numeric" id="sCoordinationYear" maxlength="4" pattern="[0-9]{4}" class="w-full px-3 py-2 border border-gray-300 rounded-md text-center bg-amber-50 font-bold text-amber-700 focus:ring-2 focus:ring-amber-400" placeholder="เช่น 2570">
+                            </div>
+                            <div class="md:col-span-5">
                                 <label class="block text-sm font-bold text-gray-700 mb-1">หน่วยงานที่ขอ <span class="text-red-500">*</span></label>
                                 <input type="text" id="sAgency" list="sAgencyList" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white" placeholder="พิมพ์ชื่อหรือเลือก...">
                                 <datalist id="sAgencyList">
@@ -979,6 +1003,17 @@
         </div>
     </div>
 
+    <!-- Image Lightbox Modal -->
+    <div id="imageLightboxModal" class="fixed inset-0 bg-black bg-opacity-90 z-[5000] hidden items-center justify-center p-4 no-print" onclick="if(event.target === this) window.closeImageLightbox()">
+        <button type="button" onclick="window.closeImageLightbox()" class="absolute top-4 right-5 text-white bg-black bg-opacity-40 hover:bg-opacity-70 rounded-full w-11 h-11 flex items-center justify-center z-20" title="ปิด (Esc)"><i class="fa-solid fa-xmark text-2xl"></i></button>
+        <button id="lightboxPrevBtn" type="button" onclick="window.changeLightboxImage(-1)" class="absolute left-3 md:left-7 top-1/2 -translate-y-1/2 text-white bg-black bg-opacity-40 hover:bg-opacity-70 rounded-full w-11 h-11 flex items-center justify-center z-20" title="รูปก่อนหน้า"><i class="fa-solid fa-chevron-left text-xl"></i></button>
+        <div class="max-w-[92vw] max-h-[90vh] flex flex-col items-center justify-center">
+            <img id="lightboxImage" src="" alt="ภาพโครงการขนาดใหญ่" class="max-w-[92vw] max-h-[82vh] object-contain rounded-lg shadow-2xl bg-black">
+            <div id="lightboxCaption" class="mt-3 text-white text-sm font-bold bg-black bg-opacity-50 px-4 py-2 rounded-full"></div>
+        </div>
+        <button id="lightboxNextBtn" type="button" onclick="window.changeLightboxImage(1)" class="absolute right-3 md:right-7 top-1/2 -translate-y-1/2 text-white bg-black bg-opacity-40 hover:bg-opacity-70 rounded-full w-11 h-11 flex items-center justify-center z-20" title="รูปถัดไป"><i class="fa-solid fa-chevron-right text-xl"></i></button>
+    </div>
+
     <script>
         // กำหนด Global Variables พื้นฐาน
         window.map = null;
@@ -1007,6 +1042,67 @@
         window.segmentCounter = 0;
         window.activeSegmentsData = {};
         window.activeImages = []; window.activePdfs = [];
+        window.originalProjectImages = []; window.originalProjectPdfs = [];
+
+        window.getAttachmentSource = function(item) {
+            if (typeof item === 'string') return item;
+            return item && typeof item === 'object' ? (item.url || item.data || '') : '';
+        };
+
+        window.getPdfName = function(item, index = 0) {
+            if (item && typeof item === 'object' && item.name) return item.name;
+            return `เอกสารแนบ_${index + 1}.pdf`;
+        };
+
+        window.escapeAttachmentText = function(value) {
+            return String(value || '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        };
+
+        window.attachmentKey = function(item) {
+            if (typeof item === 'string') return `string:${item}`;
+            try { return `object:${JSON.stringify(item)}`; }
+            catch (_) { return `unknown:${String(item)}`; }
+        };
+
+        window.getAttachmentDiff = function(originalItems, currentItems) {
+            const original = Array.isArray(originalItems) ? originalItems : [];
+            const current = Array.isArray(currentItems) ? currentItems : [];
+            const originalCounts = new Map();
+            const currentCounts = new Map();
+            original.forEach(item => {
+                const key = window.attachmentKey(item);
+                originalCounts.set(key, (originalCounts.get(key) || 0) + 1);
+            });
+            current.forEach(item => {
+                const key = window.attachmentKey(item);
+                currentCounts.set(key, (currentCounts.get(key) || 0) + 1);
+            });
+            const added = [];
+            const removed = [];
+            const remainingOriginal = new Map(originalCounts);
+            current.forEach((item, index) => {
+                const key = window.attachmentKey(item);
+                const remaining = remainingOriginal.get(key) || 0;
+                if (remaining > 0) remainingOriginal.set(key, remaining - 1);
+                else added.push({ item, index });
+            });
+            const remainingCurrent = new Map(currentCounts);
+            original.forEach(item => {
+                const key = window.attachmentKey(item);
+                const remaining = remainingCurrent.get(key) || 0;
+                if (remaining > 0) remainingCurrent.set(key, remaining - 1);
+                else removed.push(item);
+            });
+            return { added, removed, changed: added.length > 0 || removed.length > 0 };
+        };
+        window.lightboxImages = [];
+        window.lightboxIndex = 0;
+        window.lightboxProjectName = '';
         window.userRole = 'viewer'; 
         window.confirmActionCallback = null;
 
@@ -1032,7 +1128,23 @@
         };
 
         window.onload = function() {
-            initMap();
+            const mapElement = document.getElementById('map');
+            if (typeof window.L === 'undefined') {
+                console.error('Leaflet โหลดไม่สำเร็จ');
+                if (mapElement) {
+                    mapElement.innerHTML = '<div class="h-full flex items-center justify-center text-center text-red-700 font-bold p-6">ไม่สามารถโหลด Leaflet ได้<br><span class="text-xs font-normal text-gray-600">กรุณาตรวจสอบอินเทอร์เน็ตหรือการอนุญาต CDN แล้วเปิดหน้าใหม่</span></div>';
+                }
+                return;
+            }
+
+            try {
+                initMap();
+            } catch (error) {
+                console.error('INIT_MAP_ERROR', error);
+                if (mapElement && !window.map) {
+                    mapElement.innerHTML = `<div class="h-full flex items-center justify-center text-center text-red-700 font-bold p-6">เริ่มต้นแผนที่ไม่สำเร็จ<br><span class="text-xs font-normal text-gray-600">${error.message}</span></div>`;
+                }
+            }
         };
 
         // --- Alert & Modals Functions ---
@@ -1053,6 +1165,72 @@
             box.classList.remove('scale-100', 'opacity-100');
             box.classList.add('scale-95', 'opacity-0');
             setTimeout(() => { modal.classList.add('hidden'); }, 200);
+        };
+
+        window.showNewProjectNotification = function(project) {
+            let container = document.getElementById('projectNotificationContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'projectNotificationContainer';
+                container.className = 'fixed top-4 right-4 z-[10000] w-[min(24rem,calc(100vw-2rem))] space-y-3 pointer-events-none';
+                document.body.appendChild(container);
+            }
+
+            while (container.children.length >= 4) {
+                container.firstElementChild.remove();
+            }
+
+            const toast = document.createElement('div');
+            toast.className = 'pointer-events-auto bg-white border-l-4 border-emerald-500 rounded-xl shadow-2xl p-4 opacity-0 translate-x-6 transition-all duration-300';
+
+            const header = document.createElement('div');
+            header.className = 'flex items-start gap-3';
+
+            const icon = document.createElement('div');
+            icon.className = 'shrink-0 w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center';
+            icon.innerHTML = '<i class="fa-solid fa-bell"></i>';
+
+            const content = document.createElement('div');
+            content.className = 'min-w-0 flex-1';
+
+            const title = document.createElement('div');
+            title.className = 'font-bold text-emerald-700 text-sm';
+            title.textContent = 'มีโครงการใหม่ในระบบ';
+
+            const projectName = document.createElement('div');
+            projectName.className = 'font-bold text-gray-900 text-sm mt-1 break-words';
+            projectName.textContent = project?.name || 'ไม่ระบุชื่อโครงการ';
+
+            const details = document.createElement('div');
+            details.className = 'text-xs text-gray-500 mt-1';
+            const district = project?.district || '-';
+            const year = project?.year || '-';
+            details.textContent = `อำเภอ ${district} • ปีงบประมาณ ${year}`;
+
+            const closeButton = document.createElement('button');
+            closeButton.type = 'button';
+            closeButton.className = 'shrink-0 text-gray-400 hover:text-gray-700 p-1';
+            closeButton.setAttribute('aria-label', 'ปิดการแจ้งเตือน');
+            closeButton.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+
+            content.append(title, projectName, details);
+            header.append(icon, content, closeButton);
+            toast.appendChild(header);
+            container.appendChild(toast);
+
+            let removed = false;
+            const removeToast = function() {
+                if (removed) return;
+                removed = true;
+                toast.classList.add('opacity-0', 'translate-x-6');
+                setTimeout(() => toast.remove(), 300);
+            };
+
+            closeButton.addEventListener('click', removeToast);
+            requestAnimationFrame(() => {
+                toast.classList.remove('opacity-0', 'translate-x-6');
+            });
+            setTimeout(removeToast, 10000);
         };
 
         window.showConfirm = function(message, callback) {
@@ -1116,11 +1294,16 @@
             window.map = L.map('map', { zoomControl: false }).setView([16.8211, 100.2659], 12);
             L.control.zoom({ position: 'topright' }).addTo(window.map);
 
-            L.Control.geocoder({
-                position: 'topright',
-                placeholder: 'ค้นหาสถานที่...',
-                errorMessage: 'ไม่พบสถานที่'
-            }).addTo(window.map);
+            // Geocoder เป็นฟังก์ชันเสริม: ถ้า CDN โหลดไม่สำเร็จ แผนที่หลักต้องยังทำงานต่อได้
+            if (L.Control && typeof L.Control.geocoder === 'function') {
+                L.Control.geocoder({
+                    position: 'topright',
+                    placeholder: 'ค้นหาสถานที่...',
+                    errorMessage: 'ไม่พบสถานที่'
+                }).addTo(window.map);
+            } else {
+                console.warn('Leaflet Geocoder ไม่พร้อมใช้งาน แต่แผนที่หลักยังทำงานได้');
+            }
 
             L.Control.StreetView = L.Control.extend({
                 options: { position: 'topright' },
@@ -1160,8 +1343,17 @@
             window.map.on('mousemove', function(e) {
                 document.getElementById('coordLat').textContent = e.latlng.lat.toFixed(6);
                 document.getElementById('coordLng').textContent = e.latlng.lng.toFixed(6);
-                const utm = proj4('+proj=longlat +datum=WGS84 +no_defs', `+proj=utm +zone=47 +datum=WGS84 +units=m +no_defs`, [e.latlng.lng, e.latlng.lat]);
-                document.getElementById('coordUTM').textContent = `E: ${Math.round(utm[0])}, N: ${Math.round(utm[1])}`;
+                const utmElement = document.getElementById('coordUTM');
+                if (typeof window.proj4 === 'function') {
+                    const utm = window.proj4(
+                        '+proj=longlat +datum=WGS84 +no_defs',
+                        '+proj=utm +zone=47 +datum=WGS84 +units=m +no_defs',
+                        [e.latlng.lng, e.latlng.lat]
+                    );
+                    utmElement.textContent = `E: ${Math.round(utm[0])}, N: ${Math.round(utm[1])}`;
+                } else {
+                    utmElement.textContent = 'ไม่พร้อม (Proj4js โหลดไม่สำเร็จ)';
+                }
 
                 if (window.isDrawingMode && window.currentDrawingSegId) {
                     const geomType = document.querySelector('input[name="pGeomType"]:checked').value;
@@ -1278,6 +1470,26 @@
         window.renderMarkers = function() {
             window.markers.forEach(m => window.map.removeLayer(m));
             window.markers = [];
+
+            const escapePopupHtml = (value) => String(value ?? '-')
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+            const formatPopupMoney = (value) => (Number(value) || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const formatPopupDate = (value) => {
+                if (!value) return '-';
+                const date = new Date(value);
+                return Number.isNaN(date.getTime()) ? escapePopupHtml(value) : date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
+            };
+            const getContractTime = (startValue, endValue) => {
+                if (!startValue || !endValue) return { elapsed: '-', remaining: '-', total: '-' };
+                const start = new Date(startValue); const end = new Date(endValue); const today = new Date();
+                if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return { elapsed: '-', remaining: '-', total: '-' };
+                start.setHours(0,0,0,0); end.setHours(0,0,0,0); today.setHours(0,0,0,0);
+                const dayMs = 86400000;
+                const total = Math.floor((end - start) / dayMs) + 1;
+                const elapsed = today < start ? 0 : Math.min(total, Math.floor((today - start) / dayMs) + 1);
+                return { elapsed, remaining: Math.max(0, total - elapsed), total };
+            };
             
             const mapFilter = document.getElementById('mainMapDistrictFilter') ? document.getElementById('mainMapDistrictFilter').value : 'all';
             const yearFilter = document.getElementById('mainMapYearFilter') ? document.getElementById('mainMapYearFilter').value : 'all';
@@ -1342,7 +1554,7 @@
             Object.values(locationGroups).forEach(group => {
                 if(!group.coords) return; 
 
-                let popupHtml = `<div class="font-sans min-w-[280px] max-w-[320px] max-h-[350px] overflow-y-auto custom-scrollbar pr-2 pb-1">`;
+                let popupHtml = `<div class="font-sans max-h-[650px] overflow-y-auto custom-scrollbar pr-2 pb-1" style="width:min(540px, calc(100vw - 80px));">`;
                 
                 if (group.isHospital) {
                     popupHtml += `<b class="text-red-700 text-[15px] border-b-2 border-red-500 pb-1.5 block mb-3 font-bold"><i class="fa-solid fa-hospital-user mr-1"></i> ${group.title}</b>`;
@@ -1356,59 +1568,139 @@
                                     ยังไม่มีโครงการก่อสร้างในพื้นที่นี้<br>(แสดงพิกัดที่ตั้ง รพ.สต.)
                                   </div>`;
                 } else {
-                    const projectsByYear = {};
+                    const projectFolders = {};
                     group.projects.forEach(p => {
-                        const y = p.year || 'ไม่ระบุปี';
-                        if(!projectsByYear[y]) projectsByYear[y] = [];
-                        projectsByYear[y].push(p);
+                        const isCoordinationProject = p.budgetType === 'งานสำรวจและประมาณราคาเข้าแผน';
+                        const storedYear = isCoordinationProject
+                            ? (p.coordinationYear || (/^[0-9]{4}$/.test(String(p.year || '')) ? p.year : 'ไม่ระบุ'))
+                            : (p.year || 'ไม่ระบุ');
+                        const storedBudgetType = isCoordinationProject ? 'โครงการประสานแผน' : (p.budgetType || 'ไม่ระบุประเภทงบประมาณ');
+                        const folderKey = `${isCoordinationProject ? 'coordination' : 'budget'}::${storedBudgetType}::${storedYear}`;
+                        if(!projectFolders[folderKey]) {
+                            projectFolders[folderKey] = {
+                                type: isCoordinationProject ? 'coordination' : 'budget',
+                                budgetType: storedBudgetType,
+                                year: String(storedYear),
+                                projects: []
+                            };
+                        }
+                        projectFolders[folderKey].projects.push(p);
                     });
 
-                    const sortedYears = Object.keys(projectsByYear).sort((a,b) => b.localeCompare(a));
+                    const sortedFolders = Object.values(projectFolders).sort((a,b) => {
+                        const byYear = b.year.localeCompare(a.year, 'th', { numeric: true });
+                        return byYear !== 0 ? byYear : a.budgetType.localeCompare(b.budgetType, 'th');
+                    });
 
-                    sortedYears.forEach((year, yIdx) => {
+                    sortedFolders.forEach((folder, yIdx) => {
+                        const folderTitle = `${folder.budgetType} ปี พ.ศ. ${folder.year}`;
+                        const folderProjects = folder.projects;
                         const isOpen = yIdx === 0 ? 'open' : '';
                         popupHtml += `
                             <details class="bg-gray-50 rounded-lg mb-3 overflow-hidden border border-gray-200 shadow-sm group" ${isOpen}>
                                 <summary class="bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-2 font-bold text-white text-xs flex justify-between items-center shadow cursor-pointer hover:from-blue-700 hover:to-indigo-700 transition-colors">
-                                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-folder-open text-blue-200"></i> แฟ้มปีงบประมาณ ${year}</span>
+                                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-folder-open text-blue-200"></i> ${folderTitle}</span>
                                     <span class="flex items-center gap-2">
-                                        <span class="bg-white text-indigo-700 px-2 py-0.5 rounded-full text-[10px] shadow-sm">${projectsByYear[year].length} โครงการ</span>
+                                        <span class="bg-white text-indigo-700 px-2 py-0.5 rounded-full text-[10px] shadow-sm">${folderProjects.length} โครงการ</span>
                                         <i class="fa-solid fa-chevron-down transition-transform group-open:rotate-180 text-blue-200"></i>
                                     </span>
                                 </summary>
                                 <div class="p-2 space-y-2 bg-white">
                         `;
                         
-                        projectsByYear[year].forEach(p => {
-                            let adminBtns = '';
-                            if (window.userRole === 'admin') {
-                                adminBtns = `
-                                    <div class="flex gap-1.5 mt-2 pt-2 border-t border-gray-100">
-                                        <button onclick="window.editProject('${p.id}')" class="flex-1 bg-orange-50 text-orange-600 border border-orange-200 text-[10px] py-1 rounded shadow-sm hover:bg-orange-100 font-bold transition-colors"><i class="fa-solid fa-pen"></i> แก้ไข</button>
-                                        <button onclick="window.openProgressModal('${p.id}')" class="flex-1 bg-emerald-50 text-emerald-600 border border-emerald-200 text-[10px] py-1 rounded shadow-sm hover:bg-emerald-100 font-bold transition-colors"><i class="fa-solid fa-plus-circle"></i> ผลงาน</button>
-                                    </div>
-                                `;
+                        folderProjects.forEach(p => {
+                            const rawProjectName = (p.name && String(p.name).trim() !== '-' && String(p.name).trim() !== '')
+                                ? p.name
+                                : (p.sNameNew || p.sNameOld || p.sDetails || 'ไม่ระบุชื่อโครงการ');
+                            const displayProjectName = escapePopupHtml(rawProjectName);
+                            const isSurveyProject = p.budgetType === 'งานสำรวจและประมาณราคาเข้าแผน';
+
+                            if (isSurveyProject) {
+                                let surveyAdminBtns = '';
+                                if (window.userRole === 'admin') {
+                                    surveyAdminBtns = `
+                                        <div class="flex gap-1.5 mt-2 pt-2 border-t border-gray-100">
+                                            <button onclick="window.editProject('${p.id}')" class="flex-1 bg-orange-50 text-orange-600 border border-orange-200 text-[10px] py-1 rounded shadow-sm hover:bg-orange-100 font-bold"><i class="fa-solid fa-pen"></i> แก้ไข</button>
+                                            <button onclick="window.openProgressModal('${p.id}')" class="flex-1 bg-emerald-50 text-emerald-600 border border-emerald-200 text-[10px] py-1 rounded shadow-sm hover:bg-emerald-100 font-bold"><i class="fa-solid fa-plus-circle"></i> ผลงาน</button>
+                                        </div>`;
+                                }
+                                popupHtml += `
+                                    <div class="bg-white p-2 rounded border border-gray-200 shadow-sm hover:border-blue-300 transition-colors">
+                                        <div class="font-bold text-gray-800 text-xs mb-1 leading-tight break-words" title="${displayProjectName}"><i class="fa-solid fa-diagram-project text-blue-600 mr-1"></i>${displayProjectName}</div>
+                                        <div class="grid grid-cols-2 gap-1 text-[10px] bg-gray-50 p-1.5 rounded border border-gray-100 mb-1">
+                                            <div class="text-gray-500">ประเภท: <span class="font-bold text-gray-700">${escapePopupHtml(p.workType || '-')}</span></div>
+                                            <div class="text-gray-500">สถานะ: <span class="${String(p.status || '').includes('แล้วเสร็จ') ? 'text-green-600' : 'text-orange-500'} font-bold">${escapePopupHtml(p.status || '-')}</span></div>
+                                            <div class="text-gray-500">งบ: <span class="font-bold text-blue-600">฿${formatPopupMoney(p.budget)}</span></div>
+                                            <div class="text-gray-500">สัญญา: <span class="font-bold text-green-600">฿${formatPopupMoney(p.contractPrice)}</span></div>
+                                        </div>
+                                        <button type="button" onclick="window.openReportSurvey('${p.id}')" class="w-full text-[9px] bg-indigo-50 text-indigo-700 py-1 rounded border border-indigo-200 hover:bg-indigo-100 font-bold"><i class="fa-solid fa-print"></i> พิมพ์แบบสำรวจ</button>
+                                        ${p.pdfs && p.pdfs.length > 0 ? `<button type="button" onclick="window.viewPdf('${p.id}')" class="w-full mt-1.5 text-[9px] bg-rose-50 text-rose-600 py-1 rounded border border-rose-200 hover:bg-rose-100 font-bold"><i class="fa-solid fa-file-pdf"></i> ดูเอกสารแนบ PDF</button>` : ''}
+                                        ${surveyAdminBtns}
+                                    </div>`;
+                                return;
                             }
 
+                            const activities = Array.isArray(p.activities) ? p.activities : [];
+                            const actualProgress = activities.reduce((sum, activity) => sum + (Number(activity.actual) || 0), 0);
+                            const progressWidth = Math.max(0, Math.min(100, actualProgress));
+                            const contractTime = getContractTime(p.contractStartDate, p.contractEndDate);
+                            const supervisors = Array.isArray(p.supervisors) ? p.supervisors : [];
+                            const committee = Array.isArray(p.committee) ? p.committee : [];
+                            const images = Array.isArray(p.images) ? p.images : [];
+                            const statusText = String(p.status || '-');
+                            const statusColor = statusText.includes('แล้วเสร็จ') ? 'text-emerald-600' : 'text-orange-600';
+                            const supervisorsHtml = supervisors.length
+                                ? supervisors.map((s, index) => `<div>• <b>${escapePopupHtml(s.name || '-')}</b>${s.position ? ` <span class="text-gray-400">(${escapePopupHtml(s.position)})</span>` : ''}</div>`).join('')
+                                : '<div class="text-gray-400">- ยังไม่ระบุ</div>';
+                            const committeeHtml = committee.length
+                                ? committee.map((m, index) => `<div>• <b>${escapePopupHtml(m.name || '-')}</b>${m.position ? ` <span class="text-gray-400">(${escapePopupHtml(m.position)})</span>` : ''}</div>`).join('')
+                                : '<div class="text-gray-400">- ยังไม่ระบุ</div>';
+                            const imagesHtml = images.length
+                                ? images.slice(0, 8).map((src, index) => `<button type="button" onclick="window.openImageLightbox('${p.id}', ${index})" class="block rounded focus:outline-none focus:ring-2 focus:ring-blue-500" title="คลิกเพื่อดูภาพขนาดใหญ่"><img src="${escapePopupHtml(src)}" alt="รูปโครงการ ${index + 1}" class="w-16 h-12 object-cover rounded border border-gray-200 shadow-sm hover:opacity-80 hover:scale-105 transition-transform cursor-zoom-in"></button>`).join('')
+                                : '<span class="text-gray-400 text-[10px]">ยังไม่มีรูปภาพประกอบ</span>';
+                            const adminActionButtons = window.userRole === 'admin' ? `
+                                <button type="button" onclick="window.openProgressModal('${p.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white rounded py-1.5 font-bold"><i class="fa-solid fa-bars-progress"></i> อัปเดตผลงาน</button>
+                                <button type="button" onclick="window.editProject('${p.id}')" class="bg-blue-600 hover:bg-blue-700 text-white rounded py-1.5 font-bold"><i class="fa-solid fa-pen-to-square"></i> แก้ไขข้อมูล</button>` : '';
+                            const deleteButton = window.userRole === 'admin' ? `<button type="button" onclick="window.confirmDeleteProject('${p.id}')" class="col-span-2 bg-red-600 hover:bg-red-700 text-white rounded py-1.5 font-bold"><i class="fa-solid fa-trash"></i> ลบโครงการ</button>` : '';
+
                             popupHtml += `
-                                <div class="bg-white p-2 rounded border border-gray-200 shadow-sm hover:border-blue-300 transition-colors">
-                                    <div class="font-bold text-gray-800 text-xs mb-1 line-clamp-2 leading-tight" title="${p.name}">• ${p.name}</div>
-                                    <div class="grid grid-cols-2 gap-1 text-[10px] bg-gray-50 p-1.5 rounded border border-gray-100 mb-1">
-                                        <div class="text-gray-500">ประเภท: <span class="font-bold text-gray-700">${p.workType || '-'}</span></div>
-                                        <div class="text-gray-500">สถานะ: <span class="${p.status.includes('แล้วเสร็จ') ? 'text-green-600' : 'text-orange-500'} font-bold">${p.status}</span></div>
-                                        <div class="text-gray-500">งบ: <span class="font-bold text-blue-600">฿${(p.budget || 0).toLocaleString()}</span></div>
-                                        <div class="text-gray-500">สัญญา: <span class="font-bold text-green-600">฿${(p.contractPrice || 0).toLocaleString()}</span></div>
+                                <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                                    <div class="p-2.5">
+                                        <div class="text-[17px] leading-snug font-bold text-blue-800 border-b-2 border-blue-500 pb-2 mb-1">${displayProjectName}</div>
+                                        <div class="flex justify-between gap-3 text-[10px] text-gray-600 py-1">
+                                            <span><i class="fa-solid fa-screwdriver-wrench text-gray-400 mr-1"></i>${escapePopupHtml(p.workType || '-')}</span>
+                                            <span><i class="fa-solid fa-location-dot text-red-500 mr-1"></i>อ.${escapePopupHtml(p.district || '-')}</span>
+                                        </div>
+
+                                        <div class="bg-gray-50 rounded border border-gray-200 p-2 mt-1 text-[11px] space-y-1.5">
+                                            <div>ประเภทงบ: <b>${escapePopupHtml(p.budgetType || '-')}</b> <span class="text-gray-500">(ปี ${escapePopupHtml(p.year || '-')} เล่ม ${escapePopupHtml(p.volume || '-')} / ${escapePopupHtml(p.page || '-')})</span></div>
+                                            <div>เลขที่สัญญา: <b>${escapePopupHtml(p.contractNo || '-')}</b></div>
+                                            <div>งบประมาณ: <b class="text-blue-600">฿${formatPopupMoney(p.budget)}</b></div>
+                                            <div>ราคากลาง: <b class="text-gray-800">฿${formatPopupMoney(p.medianPrice)}</b></div>
+                                            <div>ราคาตามสัญญา: <b class="text-emerald-600">฿${formatPopupMoney(p.contractPrice)}</b></div>
+                                        </div>
+
+                                        <div class="bg-gray-50 rounded border border-gray-200 p-2 mt-2 text-[11px]">
+                                            <div class="mb-1.5">สถานะ: <b class="${statusColor}">${escapePopupHtml(statusText)}</b></div>
+                                            <div class="flex justify-between mb-1"><span>ผลงานจริง:</span><b class="text-emerald-600">${actualProgress.toFixed(2)}%</b></div>
+                                            <div class="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden"><div class="bg-emerald-500 h-full" style="width:${progressWidth}%"></div></div>
+                                            <div class="flex justify-between mt-2 pt-1 border-t border-gray-200"><span>เริ่ม: <b>${formatPopupDate(p.contractStartDate)}</b></span><span>สิ้นสุด: <b>${formatPopupDate(p.contractEndDate)}</b></span></div>
+                                            <div class="flex justify-between mt-1"><span>เวลาที่ใช้ไป: <b class="text-blue-600">${contractTime.elapsed} วัน</b></span><span>เวลาคงเหลือ: <b class="text-orange-600">${contractTime.remaining} วัน</b></span></div>
+                                            <div class="mt-2 pt-2 border-t border-gray-200">ผู้รับจ้าง: <b>${escapePopupHtml(p.contractor || '-')}</b></div>
+                                            <div class="mt-2 pt-2 border-t border-gray-200"><span class="text-gray-500 block mb-1">ผู้ควบคุมงาน:</span><div class="space-y-0.5">${supervisorsHtml}</div></div>
+                                            <div class="mt-2 pt-2 border-t border-gray-200"><span class="text-gray-500 block mb-1">คณะกรรมการตรวจรับ:</span><div class="space-y-0.5">${committeeHtml}</div></div>
+                                            <div class="mt-2 pt-2 border-t border-gray-200"><span class="text-gray-500 block mb-1">รูปภาพประกอบ:</span><div class="flex flex-wrap gap-2">${imagesHtml}</div>${images.length > 8 ? `<div class="text-[9px] text-gray-400 mt-1">และอีก ${images.length - 8} รูป</div>` : ''}</div>
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-1.5 mt-2 text-[10px]">
+                                            ${adminActionButtons}
+                                            <button type="button" onclick="window.openReport('${p.id}')" class="bg-teal-600 hover:bg-teal-700 text-white rounded py-1.5 font-bold"><i class="fa-solid fa-file-pdf"></i> รายงาน PDF</button>
+                                            <button type="button" onclick="window.openReportV124('${p.id}')" class="bg-purple-600 hover:bg-purple-700 text-white rounded py-1.5 font-bold"><i class="fa-solid fa-file-lines"></i> รายงาน ว124</button>
+                                            ${p.pdfs && p.pdfs.length > 0 ? `<button type="button" onclick="window.viewPdf('${p.id}')" class="col-span-2 bg-rose-50 text-rose-700 border border-rose-200 rounded py-1.5 font-bold"><i class="fa-solid fa-paperclip"></i> ดูเอกสารแนบ PDF (${p.pdfs.length})</button>` : ''}
+                                            ${deleteButton}
+                                        </div>
                                     </div>
-                                    <div class="flex gap-1.5">
-                                        ${p.budgetType && p.budgetType.includes('สำรวจ')
-                                            ? `<button type="button" onclick="window.openReportSurvey('${p.id}')" class="flex-1 text-[9px] bg-indigo-50 text-indigo-700 py-1 rounded border border-indigo-200 hover:bg-indigo-100 font-bold"><i class="fa-solid fa-print"></i> พิมพ์แบบสำรวจ</button>`
-                                            : `<button type="button" onclick="window.openReport('${p.id}')" class="flex-1 text-[9px] bg-teal-50 text-teal-700 py-1 rounded border border-teal-200 hover:bg-teal-100 font-bold"><i class="fa-solid fa-print"></i> PDF</button>`
-                                        }
-                                    </div>
-                                    ${p.pdfs && p.pdfs.length > 0 ? `<button type="button" onclick="window.viewPdf('${p.id}')" class="w-full mt-1.5 text-[9px] bg-rose-50 text-rose-600 py-1 rounded border border-rose-200 hover:bg-rose-100 font-bold flex items-center justify-center gap-1"><i class="fa-solid fa-file-pdf"></i> ดูเอกสารแนบ PDF</button>` : ''}
-                                    ${adminBtns}
-                                </div>
-                            `;
+                                </div>`;
                         });
                         popupHtml += `</div></details>`;
                     });
@@ -1434,7 +1726,7 @@
                         iconSize: [32, 32], iconAnchor: [16, 16]
                     });
                     const m = L.marker(group.coords, {icon: hospitalIcon}).addTo(window.map)
-                        .bindPopup(popupHtml, {maxWidth: 320})
+                        .bindPopup(popupHtml, {maxWidth: 580})
                         .bindTooltip(`<div class="font-bold text-red-700 font-sans">${group.title} <br><span class="text-[10px] text-gray-500 font-normal">อ.${group.district}</span></div>`, {direction: 'top', offset: [0, -10]});
                     window.markers.push(m);
                 } else {
@@ -1445,7 +1737,7 @@
                                 const polyline = L.polyline(s.coordinates, {
                                     color: group.color, weight: group.weight, dashArray: dashArray
                                 }).addTo(window.map)
-                                .bindPopup(popupHtml, {maxWidth: 320})
+                                .bindPopup(popupHtml, {maxWidth: 580})
                                 .bindTooltip(`<div class="font-bold text-blue-800 font-sans line-clamp-1">${group.title} <br><span class="text-[10px] text-gray-500 font-normal">อ.${group.district}</span></div>`, {direction: 'top', sticky: true});
                                 window.markers.push(polyline);
                                 const m1 = L.circleMarker(s.coordinates[0], { radius: 4, color: group.color, fillColor: 'white', fillOpacity: 1, weight: 2 }).addTo(window.map);
@@ -1461,7 +1753,7 @@
                                 iconSize: [24, 24], iconAnchor: [12, 12]
                             });
                             const m = L.marker(s.coordinates, {icon: customIcon}).addTo(window.map)
-                                .bindPopup(popupHtml, {maxWidth: 320})
+                                .bindPopup(popupHtml, {maxWidth: 580})
                                 .bindTooltip(`<div class="font-bold text-blue-800 font-sans line-clamp-1">${group.title} <br><span class="text-[10px] text-gray-500 font-normal">อ.${group.district}</span></div>`, {direction: 'top', offset: [0, -10]});
                             window.markers.push(m);
                         });
@@ -1590,10 +1882,12 @@
             window.toggleGeomTypeSilent();
             
             document.getElementById('supervisorsContainer').innerHTML = '<p class="text-xs text-gray-400 italic text-center p-2">เปลี่ยนสถานะโครงการเพื่อระบุผู้ควบคุมงาน</p>';
+            document.getElementById('committeeContainer').innerHTML = '<p class="text-xs text-gray-400 italic text-center p-2">ยังไม่มีข้อมูลคณะกรรมการตรวจรับ</p>';
             document.getElementById('segmentsContainer').innerHTML = '<p class="text-xs text-gray-400 italic text-center p-2">กดปุ่มด้านบนเพื่อเพิ่มพิกัด</p>';
             document.getElementById('activitiesContainer').innerHTML = '<p class="text-xs text-gray-400 italic text-center p-2">กดปุ่มเพิ่มกิจกรรมเพื่อสร้างแผนงาน</p>';
             
             window.activeSegmentsData = {}; window.segmentCounter = 0; window.activeImages = []; window.activePdfs = [];
+            window.originalProjectImages = []; window.originalProjectPdfs = [];
             window.renderPdfPreviews(); window.renderImagePreviews();
         };
 
@@ -1611,6 +1905,8 @@
 
             document.getElementById('pContractStartDate').value = p.contractStartDate || '';
             document.getElementById('pContractEndDate').value = p.contractEndDate || '';
+            document.getElementById('pContractNo').value = p.contractNo || '';
+            document.getElementById('pContractor').value = p.contractor || '';
             document.getElementById('pBudgetType').value = p.budgetType || 'ข้อบัญญัติ';
             window.toggleFormLayout();
             
@@ -1618,6 +1914,7 @@
                 document.getElementById('sDistrict').value = p.district || 'เมืองพิษณุโลก';
                 document.getElementById('sAgency').value = p.hospital || '';
                 document.getElementById('sOrder').value = p.sOrder || '1';
+                document.getElementById('sCoordinationYear').value = p.coordinationYear || (/^[0-9]{4}$/.test(String(p.year || '')) ? p.year : '');
                 document.getElementById('sNameOld').value = p.sNameOld || '';
                 document.getElementById('sNameNew').value = p.name || '';
                 document.getElementById('sDetails').value = p.sDetails || '';
@@ -1661,6 +1958,11 @@
                 p.supervisors.forEach(sup => window.addSupervisorRow(sup.name, sup.position));
             } else { document.getElementById('supervisorsContainer').innerHTML = '<p class="text-xs text-gray-400 italic text-center p-2">ยังไม่มีข้อมูลผู้ควบคุมงาน</p>'; }
 
+            document.getElementById('committeeContainer').innerHTML = '';
+            if (p.committee && p.committee.length > 0) {
+                p.committee.forEach(member => window.addCommitteeRow(member.name, member.position));
+            } else { document.getElementById('committeeContainer').innerHTML = '<p class="text-xs text-gray-400 italic text-center p-2">ยังไม่มีข้อมูลคณะกรรมการตรวจรับ</p>'; }
+
             window.toggleStatusDependentFields(); 
 
             if(document.querySelector(`input[name="pGeomType"][value="${p.geomType || 'point'}"]`)) {
@@ -1698,7 +2000,11 @@
                 p.activities.forEach(act => window.addActivity(act.name, act.unit, act.qty, act.unitPrice, act.amount, act.weight, act.actual || 0, act.startDate || '', act.endDate || ''));
             } else { document.getElementById('activitiesContainer').innerHTML = '<p class="text-xs text-gray-400 italic text-center p-2">กดปุ่มเพิ่มกิจกรรมเพื่อสร้างแผนงาน</p>'; }
 
-            window.activeImages = p.images ? [...p.images] : []; window.activePdfs = p.pdfs ? [...p.pdfs] : []; window.renderImagePreviews(); window.renderPdfPreviews();
+            window.activeImages = p.images ? [...p.images] : [];
+            window.activePdfs = p.pdfs ? [...p.pdfs] : [];
+            window.originalProjectImages = [...window.activeImages];
+            window.originalProjectPdfs = [...window.activePdfs];
+            window.renderImagePreviews(); window.renderPdfPreviews();
             document.getElementById('modalTitleText').innerHTML = '<i class="fa-solid fa-pen-to-square mr-2"></i> แก้ไขและจัดการข้อมูลโครงการ';
             window.closeSearchModal(); document.getElementById('projectModal').classList.remove('hidden');
         };
@@ -1710,9 +2016,14 @@
             const saveBtn2 = document.querySelector('#surveyBtns button');
             const origText1 = saveBtn1 ? saveBtn1.innerHTML : '';
             const origText2 = saveBtn2 ? saveBtn2.innerHTML : '';
+            const setSaveProgress = (message) => {
+                const html = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> ${message}`;
+                if (saveBtn1) saveBtn1.innerHTML = html;
+                if (saveBtn2) saveBtn2.innerHTML = html;
+            };
             
-            if(saveBtn1) { saveBtn1.disabled = true; saveBtn1.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> กำลังอัปโหลดไฟล์ (ห้ามปิดหน้าต่าง)...'; }
-            if(saveBtn2) { saveBtn2.disabled = true; saveBtn2.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> กำลังอัปโหลดไฟล์ (ห้ามปิดหน้าต่าง)...'; }
+            if(saveBtn1) { saveBtn1.disabled = true; saveBtn1.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> กำลังตรวจสอบข้อมูล...'; }
+            if(saveBtn2) { saveBtn2.disabled = true; saveBtn2.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> กำลังตรวจสอบข้อมูล...'; }
 
             try {
                 const acts = [];
@@ -1737,6 +2048,13 @@
                 if (showSupervisorsStates.includes(statusVal)) {
                     document.querySelectorAll('.supervisor-entry').forEach(row => { sups.push({ name: row.querySelector('.sup-name').value, position: row.querySelector('.sup-pos').value }); });
                 }
+
+                const committee = [];
+                document.querySelectorAll('.committee-entry').forEach(row => {
+                    const name = row.querySelector('.committee-name').value.trim();
+                    const position = row.querySelector('.committee-position').value.trim();
+                    if (name || position) committee.push({ name, position });
+                });
                 
                 const installmentVal = document.getElementById('pInstallment').value;
                 const finalStatus = statusVal === 'ส่งมอบงานงวดที่' ? `ส่งมอบงานงวดที่ ${installmentVal}` : statusVal;
@@ -1748,13 +2066,20 @@
                 let surveyData = {};
 
                 if (isSurvey) {
+                    const coordinationYear = document.getElementById('sCoordinationYear').value.trim();
+                    if (!/^[0-9]{4}$/.test(coordinationYear)) {
+                        window.showAlert('กรุณากรอกปีที่ประสานแผนเป็นปี พ.ศ. จำนวน 4 หลัก เช่น 2570');
+                        document.getElementById('sCoordinationYear').focus();
+                        return;
+                    }
                     distValue = document.getElementById('sDistrict').value;
                     cleanHospValue = document.getElementById('sAgency').value.trim();
                     finalName = document.getElementById('sNameNew').value.trim() || document.getElementById('sNameOld').value.trim() || 'โครงการสำรวจพื้นที่';
-                    finalYear = 'ข้อมูลประสานแผน';
+                    finalYear = coordinationYear;
                     finalWorkType = 'งานสำรวจเข้าแผน';
                     
                     surveyData = {
+                        coordinationYear: coordinationYear,
                         sOrder: document.getElementById('sOrder').value,
                         sNameOld: document.getElementById('sNameOld').value.trim(),
                         sDetails: document.getElementById('sDetails').value.trim(),
@@ -1796,26 +2121,57 @@
 
                 const projId = window.editingProjectId || Date.now().toString();
 
-                // Upload files to Firebase Storage
-                let uploadedImages = [];
-                if (window.activeImages && window.activeImages.length > 0) {
-                    for (let img of window.activeImages) {
-                        if (img.startsWith('data:') && window.uploadToStorage) {
-                            img = await window.uploadToStorage(img, 'images', projId);
+                // V28: upload only attachments newly added in this edit session.
+                // Existing Base64 attachments are left untouched during text-only edits.
+                const uploadedImages = Array.isArray(window.activeImages) ? [...window.activeImages] : [];
+                const uploadedPdfs = Array.isArray(window.activePdfs) ? [...window.activePdfs] : [];
+                const uploadTasks = [];
+                const originalImages = window.editingProjectId ? (window.originalProjectImages || []) : [];
+                const originalPdfs = window.editingProjectId ? (window.originalProjectPdfs || []) : [];
+                const newImageDiff = window.getAttachmentDiff(originalImages, uploadedImages);
+                const newPdfDiff = window.getAttachmentDiff(originalPdfs, uploadedPdfs);
+                newImageDiff.added.forEach(({ item, index }) => {
+                    const data = window.getAttachmentSource(item);
+                    if (data.startsWith('data:')) uploadTasks.push({ type: 'รูปภาพ', folder: 'images', index, data, target: uploadedImages, originalItem: item });
+                });
+                newPdfDiff.added.forEach(({ item, index }) => {
+                    const data = window.getAttachmentSource(item);
+                    if (data.startsWith('data:')) uploadTasks.push({ type: 'PDF', folder: 'pdfs', index, data, target: uploadedPdfs, originalItem: item });
+                });
+
+                if (uploadTasks.length > 0) {
+                    if (!window.uploadToStorage) throw new Error('ระบบจัดเก็บไฟล์ยังไม่พร้อม กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่');
+                    let nextTask = 0;
+                    let completedTasks = 0;
+                    setSaveProgress(`กำลังอัปโหลดไฟล์ใหม่ 0/${uploadTasks.length} ไฟล์...`);
+                    const uploadWorker = async () => {
+                        while (true) {
+                            const taskIndex = nextTask++;
+                            if (taskIndex >= uploadTasks.length) return;
+                            const task = uploadTasks[taskIndex];
+                            try {
+                                const uploadedUrl = await window.uploadToStorage(task.data, task.folder, projId);
+                                if (task.folder === 'pdfs' && task.originalItem && typeof task.originalItem === 'object') {
+                                    const uploadedPdf = { ...task.originalItem, url: uploadedUrl };
+                                    delete uploadedPdf.data;
+                                    task.target[task.index] = uploadedPdf;
+                                } else {
+                                    task.target[task.index] = uploadedUrl;
+                                }
+                                if (task.folder === 'images') window.activeImages[task.index] = uploadedUrl;
+                                if (task.folder === 'pdfs') window.activePdfs[task.index] = task.target[task.index];
+                                completedTasks++;
+                                setSaveProgress(`กำลังอัปโหลดไฟล์ใหม่ ${completedTasks}/${uploadTasks.length} ไฟล์...`);
+                            } catch (uploadError) {
+                                throw new Error(`${task.type}ลำดับที่ ${task.index + 1} อัปโหลดไม่สำเร็จ: ${uploadError.message || uploadError}`);
+                            }
                         }
-                        uploadedImages.push(img);
-                    }
+                    };
+                    const workerCount = Math.min(2, uploadTasks.length);
+                    await Promise.all(Array.from({ length: workerCount }, () => uploadWorker()));
                 }
-                
-                let uploadedPdfs = [];
-                if (window.activePdfs && window.activePdfs.length > 0) {
-                    for (let pdf of window.activePdfs) {
-                        if (pdf.startsWith('data:') && window.uploadToStorage) {
-                            pdf = await window.uploadToStorage(pdf, 'pdfs', projId);
-                        }
-                        uploadedPdfs.push(pdf);
-                    }
-                }
+
+                setSaveProgress('กำลังบันทึกข้อมูลโครงการ...');
 
                 const updatedData = {
                     id: projId,
@@ -1824,6 +2180,8 @@
                     district: distValue, 
                     hospital: cleanHospValue,
                     contractStartDate: document.getElementById('pContractStartDate').value, contractEndDate: document.getElementById('pContractEndDate').value,
+                    contractNo: isSurvey ? '' : document.getElementById('pContractNo').value.trim(),
+                    contractor: isSurvey ? '' : document.getElementById('pContractor').value.trim(),
                     budgetType: bType, 
                     year: finalYear,
                     volume: document.getElementById('pVolume').value, page: document.getElementById('pPage').value,
@@ -1833,18 +2191,32 @@
                     status: finalStatus,
                     geomType: document.querySelector('input[name="pGeomType"]:checked').value, lineStyle: document.getElementById('pLineStyle').value,
                     color: document.getElementById('pColor').value, weight: parseInt(document.getElementById('pWeight').value) || 5,
-                    supervisors: sups, segments: segs, activities: acts, 
+                    supervisors: sups, committee: isSurvey ? [] : committee, segments: segs, activities: acts, 
                     images: uploadedImages, 
                     pdfs: uploadedPdfs,
                     ...surveyData
                 };
 
-                if (window.editingProjectId) { 
-                    const index = window.projects.findIndex(p => p.id.toString() === window.editingProjectId.toString());
-                    if (index !== -1) window.projects[index] = updatedData;
-                } else {
-                    window.projects.push(updatedData);
+                if (!window.saveProjectToCloud) throw new Error('ระบบฐานข้อมูลยังไม่พร้อม กรุณารอสักครู่แล้วลองใหม่');
+                const isExistingProject = Boolean(window.editingProjectId);
+                const cloudPayload = { ...updatedData };
+                if (isExistingProject) {
+                    delete cloudPayload.images;
+                    delete cloudPayload.pdfs;
                 }
+                const cloudSaved = await window.saveProjectToCloud(cloudPayload, { merge: isExistingProject });
+                if (cloudSaved === false) throw new Error('ฐานข้อมูลยังไม่ยืนยันการบันทึก กรุณาลองใหม่อีกครั้ง');
+
+                if (isExistingProject && window.syncProjectAttachments) {
+                    const imageDiff = window.getAttachmentDiff(originalImages, uploadedImages);
+                    const pdfDiff = window.getAttachmentDiff(originalPdfs, uploadedPdfs);
+                    const attachmentsSaved = await window.syncProjectAttachments(projId, imageDiff, pdfDiff);
+                    if (attachmentsSaved === false) throw new Error('บันทึกรายละเอียดแล้ว แต่ปรับรายการไฟล์แนบไม่สำเร็จ กรุณาลองใหม่');
+                }
+
+                const existingIndex = window.projects.findIndex(p => p.id.toString() === updatedData.id.toString());
+                if (existingIndex !== -1) window.projects[existingIndex] = updatedData;
+                else window.projects.push(updatedData);
 
                 window.updateMainMapYearFilter();
                 window.renderMarkers();
@@ -1854,13 +2226,9 @@
                 window.showAlert(window.editingProjectId ? "อัปเดตข้อมูลโครงการและไฟล์สำเร็จ" : "เพิ่มโครงการใหม่และอัปโหลดไฟล์สำเร็จ");
                 window.closeModal();
 
-                if (window.saveProjectToCloud) {
-                    window.saveProjectToCloud(updatedData);
-                }
-
             } catch (error) {
                 console.error("Save/Upload Error:", error);
-                window.showAlert("เกิดข้อผิดพลาดในการอัปโหลดหรือบันทึกข้อมูล\n(อาจเป็นเพราะสัญญาณอินเทอร์เน็ตหลุด หรือไฟล์มีปัญหา)");
+                window.showAlert(`เกิดข้อผิดพลาดในการอัปโหลดหรือบันทึกข้อมูล\n${error.message || 'กรุณาตรวจสอบอินเทอร์เน็ตและลองใหม่'}`);
             } finally {
                 if(saveBtn1) { saveBtn1.disabled = false; saveBtn1.innerHTML = origText1; }
                 if(saveBtn2) { saveBtn2.disabled = false; saveBtn2.innerHTML = origText2; }
@@ -2211,6 +2579,18 @@
             container.appendChild(div);
         };
 
+        window.addCommitteeRow = function(name = '', position = '') {
+            const container = document.getElementById('committeeContainer');
+            if (!container) return;
+            if (container.querySelector('p.italic')) container.innerHTML = '';
+            const div = document.createElement('div');
+            div.className = 'committee-entry flex gap-2 mb-2 items-center';
+            div.innerHTML = `<input type="text" placeholder="ชื่อ-สกุล" class="committee-name flex-1 p-2 border border-cyan-200 rounded text-sm focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"><input type="text" placeholder="ตำแหน่ง/หน้าที่" class="committee-position w-2/5 p-2 border border-cyan-200 rounded text-sm focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"><button type="button" onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-600 font-bold px-2 py-1 rounded"><i class="fa-solid fa-trash"></i></button>`;
+            div.querySelector('.committee-name').value = name || '';
+            div.querySelector('.committee-position').value = position || '';
+            container.appendChild(div);
+        };
+
         window.toggleGeomType = function() {
             const isLine = document.querySelector('input[name="pGeomType"]:checked').value === 'line';
             if (Object.keys(window.activeSegmentsData).length > 0) {
@@ -2306,7 +2686,12 @@
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         if(!window.activePdfs) window.activePdfs = [];
-                        window.activePdfs.push(e.target.result);
+                        window.activePdfs.push({
+                            url: e.target.result,
+                            name: file.name || `เอกสารแนบ_${window.activePdfs.length + 1}.pdf`,
+                            size: file.size || 0,
+                            type: file.type || 'application/pdf'
+                        });
                         window.renderPdfPreviews();
                     };
                     reader.readAsDataURL(file);
@@ -2343,10 +2728,11 @@
             
             if (window.activePdfs && window.activePdfs.length > 0) {
                 window.activePdfs.forEach((pdf, idx) => {
+                    const pdfName = window.escapeAttachmentText(window.getPdfName(pdf, idx));
                     container.innerHTML += `
                         <div class="flex items-center gap-2 bg-rose-50 text-rose-700 px-3 py-1.5 rounded-lg border border-rose-200 shadow-sm w-full md:w-auto mt-2">
                             <i class="fa-solid fa-file-pdf text-rose-500"></i>
-                            <span class="text-xs font-bold truncate max-w-[150px]">เอกสารแนบ_${idx+1}.pdf</span>
+                            <span class="text-xs font-bold truncate max-w-[180px]" title="${pdfName}">${pdfName}</span>
                             <button type="button" onclick="window.removePdf(${idx})" class="text-red-500 hover:text-red-700 ml-2 cursor-pointer"><i class="fa-solid fa-times"></i></button>
                         </div>
                     `;
@@ -2375,8 +2761,10 @@
                 html += "<style>body{margin:0; background:#525659; display:flex; flex-direction:column; align-items:center; gap:20px; padding:20px; font-family:sans-serif;} iframe{width:100%; max-width:1000px; height:90vh; border:none; box-shadow:0 4px 12px rgba(0,0,0,0.5); background:white;} .pdf-title{width:100%; max-width:1000px; color:white; font-weight:bold; margin-bottom:-10px; font-size:16px;}</style>";
                 html += "</head><body>";
                 p.pdfs.forEach((pdfData, index) => {
-                    html += `<div class="pdf-title">📄 ไฟล์เอกสารแนบที่ ${index + 1} จากทั้งหมด ${p.pdfs.length} ไฟล์</div>`;
-                    html += `<iframe src='${pdfData}'></iframe>`;
+                    const pdfSrc = window.getAttachmentSource(pdfData);
+                    const pdfName = window.escapeAttachmentText(window.getPdfName(pdfData, index));
+                    html += `<div class="pdf-title">📄 ${pdfName} — ไฟล์ที่ ${index + 1} จากทั้งหมด ${p.pdfs.length} ไฟล์</div>`;
+                    html += `<iframe src='${pdfSrc}'></iframe>`;
                 });
                 html += "</body></html>";
                 pdfWindow.document.write(html);
@@ -2387,6 +2775,54 @@
         };
 
         window.removeImage = function(idx) { window.activeImages.splice(idx, 1); window.renderImagePreviews(); };
+
+        window.openImageLightbox = function(projectId, imageIndex = 0) {
+            const project = window.projects.find(p => p.id.toString() === projectId.toString());
+            if (!project || !Array.isArray(project.images) || project.images.length === 0) return;
+            window.lightboxImages = [...project.images];
+            window.lightboxIndex = Math.max(0, Math.min(Number(imageIndex) || 0, window.lightboxImages.length - 1));
+            window.lightboxProjectName = project.name || 'รูปภาพโครงการ';
+            window.renderImageLightbox();
+            const modal = document.getElementById('imageLightboxModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        };
+
+        window.renderImageLightbox = function() {
+            if (!window.lightboxImages.length) return;
+            const image = document.getElementById('lightboxImage');
+            const caption = document.getElementById('lightboxCaption');
+            const prevBtn = document.getElementById('lightboxPrevBtn');
+            const nextBtn = document.getElementById('lightboxNextBtn');
+            image.src = window.lightboxImages[window.lightboxIndex];
+            caption.textContent = `${window.lightboxProjectName} — รูปที่ ${window.lightboxIndex + 1} จาก ${window.lightboxImages.length}`;
+            const multiple = window.lightboxImages.length > 1;
+            prevBtn.classList.toggle('hidden', !multiple);
+            nextBtn.classList.toggle('hidden', !multiple);
+        };
+
+        window.changeLightboxImage = function(direction) {
+            if (window.lightboxImages.length < 2) return;
+            window.lightboxIndex = (window.lightboxIndex + direction + window.lightboxImages.length) % window.lightboxImages.length;
+            window.renderImageLightbox();
+        };
+
+        window.closeImageLightbox = function() {
+            const modal = document.getElementById('imageLightboxModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.getElementById('lightboxImage').src = '';
+            document.body.style.overflow = '';
+        };
+
+        document.addEventListener('keydown', function(event) {
+            const modal = document.getElementById('imageLightboxModal');
+            if (!modal || modal.classList.contains('hidden')) return;
+            if (event.key === 'Escape') window.closeImageLightbox();
+            if (event.key === 'ArrowLeft') window.changeLightboxImage(-1);
+            if (event.key === 'ArrowRight') window.changeLightboxImage(1);
+        });
 
         window.handleImageUpload = function(input) {
             if (!input.files || input.files.length === 0) return;
@@ -2554,6 +2990,8 @@
         window.openReportV124 = function(id) {
             const p = window.projects.find(proj => proj.id.toString() === id.toString()); if (!p) return; window.closeSearchModal(); document.body.classList.add('printing-v124'); 
             document.getElementById('v124ProjectName').innerText = p.name || '-';
+            document.getElementById('v124ContractNo').innerText = p.contractNo || '-';
+            document.getElementById('v124Contractor').innerText = p.contractor || '-';
             let durationStr = '-';
             if(p.contractStartDate && p.contractEndDate) {
                 const s = new Date(p.contractStartDate); const e = new Date(p.contractEndDate); const days = Math.round((e - s) / (1000 * 60 * 60 * 24)) + 1;
@@ -2863,10 +3301,11 @@
 
         window.exportToExcel = function() {
             if (window.projects.length === 0) { window.showAlert("ไม่มีข้อมูลโครงการให้ดาวน์โหลด"); return; }
-            let tableHTML = '<table border="1"><thead><tr bgcolor="#1e40af" style="color:white"><th>ลำดับ</th><th>ชื่อโครงการ</th><th>รพ.สต.</th><th>ประเภทงาน</th><th>อำเภอ</th><th>ประเภทของงบประมาณ</th><th>ปีงบประมาณ พ.ศ.</th><th>เล่ม</th><th>หน้า</th><th>งบประมาณ (บาท)</th><th>ราคากลาง (บาท)</th><th>ราคาตามสัญญา (บาท)</th><th>วันเริ่มต้นสัญญา</th><th>วันสิ้นสุดสัญญา</th><th>สถานะ</th><th>ผู้ควบคุมงาน</th></tr></thead><tbody>';
+            let tableHTML = '<table border="1"><thead><tr bgcolor="#1e40af" style="color:white"><th>ลำดับ</th><th>ชื่อโครงการ</th><th>รพ.สต.</th><th>ประเภทงาน</th><th>อำเภอ</th><th>ประเภทของงบประมาณ</th><th>ปีงบประมาณ พ.ศ.</th><th>เล่ม</th><th>หน้า</th><th>งบประมาณ (บาท)</th><th>ราคากลาง (บาท)</th><th>ราคาตามสัญญา (บาท)</th><th>เลขที่สัญญา</th><th>ผู้รับจ้าง</th><th>วันเริ่มต้นสัญญา</th><th>วันสิ้นสุดสัญญา</th><th>สถานะ</th><th>ผู้ควบคุมงาน</th><th>คณะกรรมการตรวจรับ</th></tr></thead><tbody>';
             window.projects.forEach((p, i) => { 
                 const supsStr = p.supervisors && p.supervisors.length > 0 ? p.supervisors.map(s => s.name).join(', ') : '-';
-                tableHTML += `<tr><td>${i+1}</td><td>${p.name}</td><td>${p.hospital || '-'}</td><td>${p.workType || '-'}</td><td>${p.district}</td><td>${p.budgetType || '-'}</td><td>${p.year || '-'}</td><td>${p.volume || '-'}</td><td>${p.page || '-'}</td><td>${p.budget}</td><td>${p.medianPrice || 0}</td><td>${p.contractPrice || 0}</td><td>${p.contractStartDate || '-'}</td><td>${p.contractEndDate || '-'}</td><td>${p.status}</td><td>${supsStr}</td></tr>`; 
+                const committeeStr = p.committee && p.committee.length > 0 ? p.committee.map(m => `${m.name || ''}${m.position ? ` (${m.position})` : ''}`).join('; ') : '-';
+                tableHTML += `<tr><td>${i+1}</td><td>${p.name}</td><td>${p.hospital || '-'}</td><td>${p.workType || '-'}</td><td>${p.district}</td><td>${p.budgetType || '-'}</td><td>${p.year || '-'}</td><td>${p.volume || '-'}</td><td>${p.page || '-'}</td><td>${p.budget}</td><td>${p.medianPrice || 0}</td><td>${p.contractPrice || 0}</td><td>${p.contractNo || '-'}</td><td>${p.contractor || '-'}</td><td>${p.contractStartDate || '-'}</td><td>${p.contractEndDate || '-'}</td><td>${p.status}</td><td>${supsStr}</td><td>${committeeStr}</td></tr>`; 
             });
             tableHTML += '</tbody></table>';
             
@@ -2879,8 +3318,8 @@
         };
 
         window.downloadTemplate = function() {
-            let tableHTML = '<table border="1"><thead><tr bgcolor="#f97316" style="color:white"><th>ชื่อโครงการ</th><th>รพ.สต.</th><th>ประเภทงาน</th><th>อำเภอ</th><th>ประเภทของงบประมาณ</th><th>ปีงบประมาณ พ.ศ.</th><th>เล่ม</th><th>หน้า</th><th>งบประมาณ (บาท)</th><th>ราคากลาง (บาท)</th><th>ราคาตามสัญญา (บาท)</th><th>วันเริ่มต้นสัญญา</th><th>วันสิ้นสุดสัญญา</th></tr></thead><tbody>';
-            tableHTML += '<tr><td>โครงการตัวอย่าง (ลบแถวนี้ทิ้งได้)</td><td>รพ.สต.บ้านคลอง</td><td>งานอาคาร</td><td>เมืองพิษณุโลก</td><td>ข้อบัญญัติ</td><td>2567</td><td>1</td><td>15</td><td>1500000</td><td>1500000</td><td>1480000</td><td>2024-02-01</td><td>2024-08-31</td></tr></tbody></table>';
+            let tableHTML = '<table border="1"><thead><tr bgcolor="#f97316" style="color:white"><th>ชื่อโครงการ</th><th>รพ.สต.</th><th>ประเภทงาน</th><th>อำเภอ</th><th>ประเภทของงบประมาณ</th><th>ปีงบประมาณ พ.ศ.</th><th>เล่ม</th><th>หน้า</th><th>งบประมาณ (บาท)</th><th>ราคากลาง (บาท)</th><th>ราคาตามสัญญา (บาท)</th><th>เลขที่สัญญา</th><th>ผู้รับจ้าง</th><th>วันเริ่มต้นสัญญา</th><th>วันสิ้นสุดสัญญา</th><th>คณะกรรมการตรวจรับ</th></tr></thead><tbody>';
+            tableHTML += '<tr><td>โครงการตัวอย่าง (ลบแถวนี้ทิ้งได้)</td><td>รพ.สต.บ้านคลอง</td><td>งานอาคาร</td><td>เมืองพิษณุโลก</td><td>ข้อบัญญัติ</td><td>2567</td><td>1</td><td>15</td><td>1500000</td><td>1500000</td><td>1480000</td><td>1/2567</td><td>บริษัทตัวอย่าง จำกัด</td><td>2024-02-01</td><td>2024-08-31</td><td>นาย ก (ประธาน); นาง ข (กรรมการ)</td></tr></tbody></table>';
 
             const uri = 'data:application/vnd.ms-excel;base64,';
             const template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"></head><body>{table}</body></html>';
@@ -2905,8 +3344,12 @@
                         const contractPrice = parseFloat(String(row['ราคาตามสัญญา (บาท)'] || row['ราคาตามสัญญา'] || 0).replace(/,/g, '')) || 0;
                         const uniqueId = Date.now().toString() + "_" + index + "_" + Math.floor(Math.random() * 10000).toString();
 
+                        const committee = String(row['คณะกรรมการตรวจรับ'] || '').split(';').map(item => item.trim()).filter(Boolean).map(item => {
+                            const match = item.match(/^(.*?)\s*\((.*?)\)\s*$/);
+                            return match ? { name: match[1].trim(), position: match[2].trim() } : { name: item, position: '' };
+                        });
                         const projData = {
-                            id: uniqueId, name: name, hospital: row['รพ.สต.'] || '', workType: row['ประเภทงาน'] || 'ไม่ระบุ', district: row['อำเภอ'] || '', contractStartDate: row['วันเริ่มต้นสัญญา'] || '', contractEndDate: row['วันสิ้นสุดสัญญา'] || '', budgetType: row['ประเภทของงบประมาณ'] || row['ประเภทงบประมาณ'] || 'ข้อบัญญัติ', year: String(row['ปีงบประมาณ พ.ศ.'] || row['ปีงบประมาณ'] || ''), volume: String(row['เล่ม'] || ''), page: String(row['หน้า'] || ''), budget: budget, medianPrice: medianPrice, contractPrice: contractPrice, status: "จัดทำแบบรูปรายการก่อสร้าง", geomType: "point", lineStyle: "solid", color: "#ef4444", weight: 5, supervisors: [], segments: [], activities: [], images: []
+                            id: uniqueId, name: name, hospital: row['รพ.สต.'] || '', workType: row['ประเภทงาน'] || 'ไม่ระบุ', district: row['อำเภอ'] || '', contractStartDate: row['วันเริ่มต้นสัญญา'] || '', contractEndDate: row['วันสิ้นสุดสัญญา'] || '', contractNo: row['เลขที่สัญญา'] || '', contractor: row['ผู้รับจ้าง'] || '', committee: committee, budgetType: row['ประเภทของงบประมาณ'] || row['ประเภทงบประมาณ'] || 'ข้อบัญญัติ', year: String(row['ปีงบประมาณ พ.ศ.'] || row['ปีงบประมาณ'] || ''), volume: String(row['เล่ม'] || ''), page: String(row['หน้า'] || ''), budget: budget, medianPrice: medianPrice, contractPrice: contractPrice, status: "จัดทำแบบรูปรายการก่อสร้าง", geomType: "point", lineStyle: "solid", color: "#ef4444", weight: 5, supervisors: [], segments: [], activities: [], images: []
                         };
                         
                         window.projects.push(projData); 
@@ -3002,7 +3445,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, updateDoc, arrayUnion, arrayRemove, onSnapshot, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         // ใช้ Firebase Config ของโปรเจกต์คุณโดยตรง
@@ -3027,29 +3470,60 @@
 
             window.uploadToStorage = async function(dataUrl, folder, projectId) {
                 if (!dataUrl || !dataUrl.startsWith('data:')) return dataUrl; // Already a URL or empty
+                if (!window.currentUser) throw new Error('ระบบยังเชื่อมต่อบัญชีผู้ใช้ไม่สำเร็จ กรุณารอสักครู่แล้วลองใหม่');
                 const timestamp = Date.now();
                 let ext = 'bin';
                 if (dataUrl.includes('application/pdf')) ext = 'pdf';
                 else if (dataUrl.includes('image/jpeg')) ext = 'jpg';
                 else if (dataUrl.includes('image/png')) ext = 'png';
+                else if (dataUrl.includes('image/webp')) ext = 'webp';
                 
                 const fileName = `${folder}/proj_${projectId}_${timestamp}_${Math.floor(Math.random()*1000)}.${ext}`;
                 const sRef = storageRef(window.firebaseStorage, fileName);
-                await uploadString(sRef, dataUrl, 'data_url');
-                return await getDownloadURL(sRef);
+                await Promise.race([
+                    uploadString(sRef, dataUrl, 'data_url'),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('การอัปโหลดไม่สำเร็จภายใน 60 วินาที')), 60000))
+                ]);
+                return await Promise.race([
+                    getDownloadURL(sRef),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('ขอ URL ของไฟล์ไม่สำเร็จภายใน 30 วินาที')), 30000))
+                ]);
             };
 
-            window.saveProjectToCloud = async function(projectData) {
-                if (!window.currentUser) return;
+            window.saveProjectToCloud = async function(projectData, options = {}) {
+                if (!window.currentUser) return false;
                 const isNew = !projectData.id; 
                 const projId = isNew ? Date.now().toString() : projectData.id.toString(); 
                 projectData.id = projId;
                 try {
                     const projRef = doc(db, 'projects', projId);
-                    await setDoc(projRef, projectData);
+                    if (options.merge) await setDoc(projRef, projectData, { merge: true });
+                    else await setDoc(projRef, projectData);
+                    return true;
                 } catch (error) { 
                     console.error("Save Error:", error); 
                     window.showAlert("เกิดข้อผิดพลาดในการบันทึกข้อมูลคลาวด์"); 
+                    return false;
+                }
+            };
+
+            window.syncProjectAttachments = async function(projectId, imageDiff, pdfDiff) {
+                if (!window.currentUser) return false;
+                const projRef = doc(db, 'projects', projectId.toString());
+                try {
+                    const removePayload = {};
+                    if (imageDiff && imageDiff.removed.length) removePayload.images = arrayRemove(...imageDiff.removed);
+                    if (pdfDiff && pdfDiff.removed.length) removePayload.pdfs = arrayRemove(...pdfDiff.removed);
+                    if (Object.keys(removePayload).length) await updateDoc(projRef, removePayload);
+
+                    const addPayload = {};
+                    if (imageDiff && imageDiff.added.length) addPayload.images = arrayUnion(...imageDiff.added.map(entry => entry.item));
+                    if (pdfDiff && pdfDiff.added.length) addPayload.pdfs = arrayUnion(...pdfDiff.added.map(entry => entry.item));
+                    if (Object.keys(addPayload).length) await updateDoc(projRef, addPayload);
+                    return true;
+                } catch (error) {
+                    console.error('Attachment Sync Error:', error);
+                    return false;
                 }
             };
 
@@ -3098,12 +3572,20 @@
                 }
             }
 
+            let projectNotificationBaselineReady = false;
+
             initAuth();
             onAuthStateChanged(auth, (user) => {
                 window.currentUser = user;
                 if (user) {
                     const projectsRef = collection(db, 'projects');
                     onSnapshot(projectsRef, (snapshot) => {
+                        const newlyAddedProjects = projectNotificationBaselineReady
+                            ? snapshot.docChanges()
+                                .filter(change => change.type === 'added')
+                                .map(change => ({ id: change.doc.id, ...change.doc.data() }))
+                            : [];
+
                         window.projects = []; 
                         snapshot.forEach((doc) => { 
                             window.projects.push({ id: doc.id, ...doc.data() }); 
@@ -3113,6 +3595,16 @@
                         if(window.updateInspectorLists) window.updateInspectorLists();
                         if(!document.getElementById('searchModal').classList.contains('hidden')) window.openSearchModal();
                         if(!document.getElementById('dashboardModal').classList.contains('hidden')) window.renderDashboard();
+
+                        newlyAddedProjects.forEach(project => {
+                            if (typeof window.showNewProjectNotification === 'function') {
+                                window.showNewProjectNotification(project);
+                            }
+                        });
+
+                        if (!snapshot.metadata.fromCache) {
+                            projectNotificationBaselineReady = true;
+                        }
                         
                         const cloudLoader = document.getElementById('cloudLoader');
                         if(cloudLoader && !cloudLoader.classList.contains('uploading')) {
