@@ -41,7 +41,7 @@
         details[open] summary ~ * { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* V36: coordination promotion + active-folder cleanup */
+        /* V37: linked coordination/ordinance project management */
         .survey-print-page { box-sizing: border-box; background: #fff; width: 100%; min-height: 210mm; }
         .survey-photo-page { border-top: 8px solid #1e3a8a; }
         .survey-photo-grid { display: grid; gap: 5mm; margin-top: 5mm; }
@@ -115,6 +115,43 @@
             <div class="flex justify-center gap-3">
                 <button onclick="closeCustomConfirm(false)" class="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-bold transition-colors border border-gray-300">ยกเลิก</button>
                 <button onclick="closeCustomConfirm(true)" class="flex-1 px-4 py-2 text-white bg-orange-600 hover:bg-orange-700 rounded-lg font-bold shadow-md transition-colors">ยืนยัน</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Linked Coordination / Ordinance Project Management -->
+    <div id="linkedProjectDeleteModal" class="fixed inset-0 bg-slate-950 bg-opacity-70 z-[9998] hidden items-center justify-center p-4 no-print" onclick="if(event.target === this) window.closeLinkedProjectDeleteModal()">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden">
+            <div class="bg-slate-800 text-white px-5 py-4 flex justify-between items-center">
+                <div>
+                    <h3 class="font-bold text-lg"><i class="fa-solid fa-link mr-2 text-amber-300"></i>จัดการโครงการที่เชื่อมโยงกัน</h3>
+                    <p class="text-[11px] text-slate-300 mt-1">โครงการประสานแผนและโครงการข้อบัญญัติจะถูกจัดการเป็นชุดเดียวกัน</p>
+                </div>
+                <button type="button" onclick="window.closeLinkedProjectDeleteModal()" class="w-9 h-9 rounded-full bg-white bg-opacity-10 hover:bg-opacity-20"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-5">
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                    <div class="text-[10px] font-bold text-blue-600">โครงการที่เลือก</div>
+                    <div id="linkedDeleteProjectName" class="font-bold text-blue-950 mt-1">-</div>
+                    <div id="linkedDeleteProjectMeta" class="text-xs text-blue-700 mt-1">-</div>
+                </div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">เหตุผล/หมายเหตุ</label>
+                <textarea id="linkedDeleteReason" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-4 focus:ring-2 focus:ring-blue-400" placeholder="เช่น บันทึกข้อมูลผิด / โครงการถูกยกเลิก / ยกระดับผิดรายการ"></textarea>
+                <div class="space-y-3">
+                    <button type="button" onclick="window.runLinkedProjectAction('return')" class="w-full text-left border border-orange-200 bg-orange-50 hover:bg-orange-100 rounded-xl p-3 flex items-start gap-3">
+                        <span class="w-9 h-9 rounded-full bg-orange-500 text-white flex items-center justify-center shrink-0"><i class="fa-solid fa-arrow-rotate-left"></i></span>
+                        <span><b class="text-orange-900">ย้อนกลับเป็นโครงการประสานแผน</b><span class="block text-xs text-orange-700 mt-1">ลบเฉพาะแฟ้มข้อบัญญัติ คืนต้นทางไปอยู่ระหว่างพิจารณา และเก็บประวัติการย้อนกลับ</span></span>
+                    </button>
+                    <button type="button" onclick="window.runLinkedProjectAction('archive')" class="w-full text-left border border-slate-300 bg-slate-50 hover:bg-slate-100 rounded-xl p-3 flex items-start gap-3">
+                        <span class="w-9 h-9 rounded-full bg-slate-600 text-white flex items-center justify-center shrink-0"><i class="fa-solid fa-box-archive"></i></span>
+                        <span><b class="text-slate-900">ยกเลิกและเก็บเข้าคลัง</b><span class="block text-xs text-slate-600 mt-1">ซ่อนทั้งสองแฟ้มจากงานปัจจุบัน แต่ยังรักษาข้อมูลและเอกสารไว้ตรวจสอบย้อนหลัง</span></span>
+                    </button>
+                    <button type="button" onclick="window.runLinkedProjectAction('delete-both')" class="w-full text-left border border-red-300 bg-red-50 hover:bg-red-100 rounded-xl p-3 flex items-start gap-3">
+                        <span class="w-9 h-9 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0"><i class="fa-solid fa-trash-can"></i></span>
+                        <span><b class="text-red-900">ลบทั้งต้นทางและข้อบัญญัติ</b><span class="block text-xs text-red-700 mt-1">ใช้เฉพาะข้อมูลทดลองหรือข้อมูลที่สร้างผิด ระบบจะยืนยันอีกครั้งก่อนลบถาวร</span></span>
+                    </button>
+                </div>
+                <button type="button" onclick="window.closeLinkedProjectDeleteModal()" class="mt-4 w-full bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg py-2.5 font-bold">ปิดโดยไม่ดำเนินการ</button>
             </div>
         </div>
     </div>
@@ -814,9 +851,24 @@
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
             <div class="bg-blue-600 text-white px-6 py-4 flex justify-between items-center font-bold shadow-sm">
                 <h2 class="text-lg"><i class="fa-solid fa-list-check mr-2"></i> รายชื่อโครงการ</h2>
-                <button type="button" onclick="window.closeSearchModal()" class="text-white hover:text-gray-200"><i class="fa-solid fa-times text-xl"></i></button>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="window.openArchivedProjectsModal()" class="admin-only bg-white bg-opacity-15 hover:bg-opacity-25 px-3 py-1.5 rounded-lg text-xs"><i class="fa-solid fa-box-archive mr-1"></i> คลังโครงการยกเลิก</button>
+                    <button type="button" onclick="window.closeSearchModal()" class="text-white hover:text-gray-200"><i class="fa-solid fa-times text-xl"></i></button>
+                </div>
             </div>
             <div id="searchContent" class="p-6 overflow-y-auto flex-1 bg-gray-50 custom-scrollbar"></div>
+        </div>
+    </div>
+
+    <!-- Archived linked projects -->
+    <div id="archivedProjectsModal" class="fixed inset-0 bg-black bg-opacity-60 z-[3100] hidden items-center justify-center p-4 text-gray-700 no-print">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] flex flex-col overflow-hidden">
+            <div class="bg-slate-700 text-white px-6 py-4 flex justify-between items-center">
+                <div><h2 class="text-lg font-bold"><i class="fa-solid fa-box-archive mr-2"></i>คลังโครงการยกเลิก</h2><p class="text-[11px] text-slate-200 mt-1">เก็บประวัติโครงการประสานแผนและข้อบัญญัติที่ยกเลิกไว้ตรวจสอบย้อนหลัง</p></div>
+                <button type="button" onclick="window.closeArchivedProjectsModal()" class="text-white hover:text-gray-200"><i class="fa-solid fa-times text-xl"></i></button>
+            </div>
+            <div id="archivedProjectsContent" class="p-5 overflow-y-auto flex-1 bg-slate-50 custom-scrollbar"></div>
+            <div class="border-t bg-white px-5 py-3 flex justify-end"><button type="button" onclick="window.closeArchivedProjectsModal()" class="bg-gray-100 hover:bg-gray-200 px-5 py-2 rounded-lg font-bold">ปิด</button></div>
         </div>
     </div>
 
@@ -1243,6 +1295,7 @@
         
         window.editingProjectId = null;
         window.progressProjectId = null;
+        window.linkedDeleteProjectId = null;
         window.segmentCounter = 0;
         window.activeSegmentsData = {};
         window.activeImages = []; window.activePdfs = [];
@@ -1442,6 +1495,7 @@
             return ['แล้วเสร็จ','ระยะประกัน'].includes(window.normalizeProjectStage(project.status));
         };
         window.isArchivedCoordinationProject = function(project) {
+            if (project?.recordArchived === true) return true;
             return project?.budgetType === 'งานสำรวจและประมาณราคาเข้าแผน' && Boolean(project?.ordinanceProjectId);
         };
         window.getProjectDisplayBudgetFolder = function(project) {
@@ -3019,10 +3073,190 @@
             }
         };
 
+        window.getLinkedProjectPair = function(id) {
+            const target = window.projects.find(p => String(p.id) === String(id));
+            if (!target) return { target:null, source:null, ordinance:null };
+            let source = null;
+            let ordinance = null;
+            if (target.sourceCoordinationId) {
+                ordinance = target;
+                source = window.projects.find(p => String(p.id) === String(target.sourceCoordinationId)) || null;
+            } else {
+                source = target;
+                ordinance = window.projects.find(p => String(p.id) === String(target.ordinanceProjectId) || String(p.sourceCoordinationId || '') === String(target.id)) || null;
+            }
+            return { target, source, ordinance };
+        };
+
+        window.closeLinkedProjectDeleteModal = function() {
+            const modal = document.getElementById('linkedProjectDeleteModal');
+            if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+            window.linkedDeleteProjectId = null;
+        };
+
+        window.openLinkedProjectDeleteModal = function(id) {
+            const pair = window.getLinkedProjectPair(id);
+            if (!pair.target) { window.showAlert('ไม่พบโครงการที่ต้องการจัดการ'); return; }
+            window.linkedDeleteProjectId = String(id);
+            document.getElementById('linkedDeleteProjectName').textContent = pair.target.name || pair.target.sNameOld || pair.source?.name || 'ไม่ระบุชื่อโครงการ';
+            document.getElementById('linkedDeleteProjectMeta').textContent = `ต้นทาง: ${pair.source?.name || pair.source?.sNameOld || 'ไม่พบข้อมูล'} · ข้อบัญญัติ: ${pair.ordinance?.name || 'ไม่พบข้อมูล'}`;
+            document.getElementById('linkedDeleteReason').value = '';
+            const modal = document.getElementById('linkedProjectDeleteModal');
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+        };
+
+        window.refreshAfterLinkedProjectAction = function() {
+            window.updateMainMapYearFilter();
+            window.renderMarkers();
+            window.updateAlertCenterBadge();
+            window.refreshOperationalViews();
+            if (!document.getElementById('searchModal').classList.contains('hidden')) window.openSearchModal();
+            if (!document.getElementById('dashboardModal').classList.contains('hidden')) window.renderDashboard();
+            window.closeProjectStatusModal();
+        };
+
+        window.closeArchivedProjectsModal = function() {
+            const modal = document.getElementById('archivedProjectsModal');
+            if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+        };
+
+        window.openArchivedProjectsModal = function() {
+            if (window.userRole !== 'admin') { window.showAlert('เฉพาะผู้ดูแลระบบเท่านั้นที่เปิดคลังโครงการยกเลิกได้'); return; }
+            const content = document.getElementById('archivedProjectsContent');
+            const archived = window.projects.filter(p => p.recordArchived === true);
+            const groups = new Map();
+            archived.forEach(project => {
+                const key = String(project.sourceCoordinationId || project.id);
+                if (!groups.has(key)) groups.set(key, { source:null, ordinance:null });
+                if (project.sourceCoordinationId) groups.get(key).ordinance = project;
+                else groups.get(key).source = project;
+            });
+            archived.forEach(project => {
+                if (!project.sourceCoordinationId && project.ordinanceProjectId) {
+                    const group = groups.get(String(project.id));
+                    if (group && !group.ordinance) group.ordinance = window.projects.find(p => String(p.id) === String(project.ordinanceProjectId)) || null;
+                }
+            });
+            if (!groups.size) {
+                content.innerHTML = '<div class="text-center py-12 text-gray-400"><i class="fa-solid fa-box-open text-4xl mb-3"></i><div class="font-bold">ยังไม่มีโครงการในคลัง</div></div>';
+            } else {
+                content.innerHTML = [...groups.entries()].map(([sourceId, pair]) => {
+                    const source = pair.source || window.projects.find(p => String(p.id) === sourceId) || null;
+                    const ordinance = pair.ordinance;
+                    const name = ordinance?.name || source?.name || source?.sNameOld || 'ไม่ระบุชื่อโครงการ';
+                    const reason = source?.archiveReason || ordinance?.archiveReason || '-';
+                    const date = source?.archivedAt || ordinance?.archivedAt || '';
+                    return `<div class="bg-white border border-slate-200 rounded-xl p-4 mb-3 shadow-sm">
+                        <div class="flex flex-wrap justify-between gap-3">
+                            <div class="min-w-0"><div class="font-bold text-slate-900">${window.escapeHtml(name)}</div><div class="text-xs text-slate-500 mt-1">${window.escapeHtml(source?.hospital || ordinance?.hospital || '-')} · อ.${window.escapeHtml(source?.district || ordinance?.district || '-')}</div><div class="text-xs text-slate-600 mt-2"><b>เหตุผล:</b> ${window.escapeHtml(reason)}</div><div class="text-[10px] text-slate-400 mt-1">เก็บเข้าคลัง ${date ? new Date(date).toLocaleString('th-TH') : '-'}</div></div>
+                            <button type="button" onclick="window.confirmRestoreArchivedProjects('${window.escapeHtml(source?.id || sourceId)}','${window.escapeHtml(ordinance?.id || '')}')" class="self-start bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-xs font-bold"><i class="fa-solid fa-rotate-left mr-1"></i> คืนสู่แฟ้มงาน</button>
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+            const modal = document.getElementById('archivedProjectsModal');
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+        };
+
+        window.confirmRestoreArchivedProjects = function(sourceId, ordinanceId) {
+            window.showConfirm('ยืนยันคืนโครงการประสานแผนและโครงการข้อบัญญัติกลับสู่แฟ้มงานปัจจุบันหรือไม่?', async () => {
+                const ids = [sourceId, ordinanceId].filter(Boolean);
+                const now = new Date().toISOString();
+                const update = { recordArchived:false, archiveStatus:'คืนสู่แฟ้มงาน', restoredAt:now, restoredBy:window.currentUser?.uid || 'system', lastUpdatedAt:now };
+                const ok = window.restoreLinkedProjectsInCloud ? await window.restoreLinkedProjectsInCloud(ids, update) : true;
+                if (ok === false) { window.showAlert('คืนโครงการจากคลังไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตและลองใหม่'); return; }
+                window.projects.forEach(p => { if (ids.includes(String(p.id))) Object.assign(p, update); });
+                window.refreshAfterLinkedProjectAction();
+                window.openArchivedProjectsModal();
+                window.showAlert('คืนโครงการจากคลังเข้าสู่แฟ้มงานเรียบร้อยแล้ว');
+            });
+        };
+
+        window.executeLinkedProjectAction = async function(action, reason) {
+            const pair = window.getLinkedProjectPair(window.linkedDeleteProjectId);
+            if (!pair.source || !pair.ordinance) {
+                window.showAlert('พบข้อมูลเชื่อมโยงไม่ครบ จึงยังไม่ดำเนินการเพื่อป้องกันข้อมูลเสียหาย');
+                return;
+            }
+            const sourceId = String(pair.source.id);
+            const ordinanceId = String(pair.ordinance.id);
+            const now = new Date().toISOString();
+            try {
+                if (action === 'return') {
+                    const actionHistory = [
+                        ...(Array.isArray(pair.source.coordinationActions) ? pair.source.coordinationActions : []),
+                        { type:'ย้อนกลับจากโครงการข้อบัญญัติ', date:window.todayISO(), detail:reason || 'ยกระดับผิดรายการและส่งกลับเข้ากระบวนการพิจารณา', officer:window.currentUser?.uid || 'system', resultStatus:'ดำเนินการแล้ว', createdAt:now }
+                    ];
+                    const sourceUpdate = {
+                        ordinanceProjectId:null, ordinanceProjectName:'', ordinancePromotedAt:null, ordinancePromotedBy:null,
+                        coordinationSelectionResult:'อยู่ระหว่างพิจารณา', coordinationSelectionDate:'',
+                        coordinationStatus:'สิ้นสุดการประสานแผน',
+                        nextAction:'รอพิจารณาเข้าสู่ข้อบัญญัติอีกครั้ง', coordinationNextAction:'รอพิจารณาเข้าสู่ข้อบัญญัติอีกครั้ง',
+                        returnedFromOrdinanceAt:now, returnedFromOrdinanceReason:reason || '', coordinationActions:actionHistory, lastUpdatedAt:now
+                    };
+                    const uniqueOrdinanceImages = (Array.isArray(pair.ordinance.images) ? pair.ordinance.images : []).filter(item => {
+                        const imageId = window.getFirestoreImageId ? window.getFirestoreImageId(item) : '';
+                        return imageId && !window.projects.some(project => String(project.id) !== ordinanceId && (Array.isArray(project.images) ? project.images : []).some(other => window.getFirestoreImageId(other) === imageId));
+                    });
+                    const ok = window.returnLinkedProjectInCloud ? await window.returnLinkedProjectInCloud(sourceId, ordinanceId, sourceUpdate, uniqueOrdinanceImages) : true;
+                    if (ok === false) throw new Error('ไม่สามารถบันทึกการย้อนกลับบนฐานข้อมูลได้');
+                    Object.assign(pair.source, sourceUpdate);
+                    window.projects = window.projects.filter(p => String(p.id) !== ordinanceId);
+                    uniqueOrdinanceImages.forEach(item => window.firestoreImageCache?.delete(window.getFirestoreImageId(item)));
+                    window.closeLinkedProjectDeleteModal();
+                    window.refreshAfterLinkedProjectAction();
+                    window.showAlert('ย้อนกลับเป็นโครงการประสานแผนเรียบร้อยแล้ว\nแฟ้มข้อบัญญัติถูกลบ และโครงการต้นทางกลับไปรอพิจารณา');
+                    return;
+                }
+                if (action === 'archive') {
+                    const archiveUpdate = { recordArchived:true, archivedAt:now, archivedBy:window.currentUser?.uid || 'system', archiveReason:reason || 'ยกเลิกและเก็บประวัติ', archiveStatus:'ยกเลิกและเก็บเข้าคลัง', lastUpdatedAt:now };
+                    const ok = window.archiveLinkedProjectsInCloud ? await window.archiveLinkedProjectsInCloud(sourceId, ordinanceId, archiveUpdate) : true;
+                    if (ok === false) throw new Error('ไม่สามารถบันทึกการยกเลิกบนฐานข้อมูลได้');
+                    Object.assign(pair.source, archiveUpdate); Object.assign(pair.ordinance, archiveUpdate);
+                    window.closeLinkedProjectDeleteModal();
+                    window.refreshAfterLinkedProjectAction();
+                    window.showAlert('ยกเลิกและเก็บโครงการทั้งสองรายการเข้าคลังเรียบร้อยแล้ว\nข้อมูลและเอกสารยังคงอยู่สำหรับตรวจสอบย้อนหลัง');
+                    return;
+                }
+                if (action === 'delete-both') {
+                    const excludedIds = new Set([sourceId, ordinanceId]);
+                    const refs = [...(Array.isArray(pair.source.images) ? pair.source.images : []), ...(Array.isArray(pair.ordinance.images) ? pair.ordinance.images : [])];
+                    const uniqueImageRefs = [];
+                    const seen = new Set();
+                    refs.forEach(item => {
+                        const imageId = window.getFirestoreImageId ? window.getFirestoreImageId(item) : '';
+                        if (!imageId || seen.has(imageId)) return;
+                        const usedOutsidePair = window.projects.some(project => !excludedIds.has(String(project.id)) && (Array.isArray(project.images) ? project.images : []).some(other => window.getFirestoreImageId(other) === imageId));
+                        if (!usedOutsidePair) { seen.add(imageId); uniqueImageRefs.push(item); }
+                    });
+                    const ok = window.deleteLinkedProjectsInCloud ? await window.deleteLinkedProjectsInCloud(sourceId, ordinanceId, uniqueImageRefs) : true;
+                    if (ok === false) throw new Error('ไม่สามารถลบข้อมูลบนฐานข้อมูลได้');
+                    window.projects = window.projects.filter(p => !excludedIds.has(String(p.id)));
+                    uniqueImageRefs.forEach(item => window.firestoreImageCache?.delete(window.getFirestoreImageId(item)));
+                    window.closeLinkedProjectDeleteModal();
+                    window.refreshAfterLinkedProjectAction();
+                    window.showAlert('ลบโครงการต้นทาง โครงการข้อบัญญัติ และรูปภาพที่ไม่มีโครงการอื่นใช้งานเรียบร้อยแล้ว');
+                }
+            } catch (error) {
+                console.error('Linked project action error:', error);
+                window.showAlert(`ดำเนินการไม่สำเร็จ\n${error.message || 'กรุณาตรวจสอบอินเทอร์เน็ตและลองใหม่'}`);
+            }
+        };
+
+        window.runLinkedProjectAction = function(action) {
+            const reason = document.getElementById('linkedDeleteReason')?.value.trim() || '';
+            const messages = {
+                'return':'ยืนยันย้อนโครงการกลับเป็นงานประสานแผนหรือไม่?\nแฟ้มข้อบัญญัติจะถูกลบ แต่ข้อมูลต้นทางและเอกสารจะยังอยู่',
+                'archive':'ยืนยันยกเลิกและเก็บโครงการทั้งสองรายการเข้าคลังหรือไม่?\nโครงการจะถูกซ่อนจากแฟ้มงานปัจจุบัน แต่ยังตรวจสอบย้อนหลังได้',
+                'delete-both':'ยืนยันลบทั้งโครงการประสานแผนและโครงการข้อบัญญัติหรือไม่?\nข้อมูลและรูปภาพที่ไม่ถูกใช้งานที่อื่นจะถูกลบถาวรและกู้คืนไม่ได้'
+            };
+            window.showConfirm(messages[action], () => window.executeLinkedProjectAction(action, reason));
+        };
+
         window.confirmDeleteProject = function(id) {
             const targetProject = window.projects.find(p => String(p.id) === String(id));
-            if (targetProject?.ordinanceProjectId || targetProject?.sourceCoordinationId) {
-                window.showAlert('โครงการนี้เชื่อมโยงระหว่างงานประสานแผนกับข้อบัญญัติ จึงไม่อนุญาตให้ลบโดยตรง เพื่อรักษาประวัติและเอกสารอ้างอิง');
+            if (targetProject?.ordinanceProjectId || targetProject?.sourceCoordinationId || window.projects.some(p => String(p.sourceCoordinationId || '') === String(id))) {
+                window.openLinkedProjectDeleteModal(id);
                 return;
             }
             window.showConfirm("คุณแน่ใจหรือไม่ว่าต้องการลบโครงการนี้?\nข้อมูลที่ลบจะไม่สามารถกู้คืนได้", async () => {
@@ -4007,7 +4241,7 @@
     
 
         window.openAnalysisModal = function() {
-            const distSet = new Set(); window.projects.forEach(p => { if (p.district && p.district !== '-') distSet.add(p.district); });
+            const distSet = new Set(); window.projects.forEach(p => { if (!window.isArchivedCoordinationProject(p) && p.district && p.district !== '-') distSet.add(p.district); });
             const distSelect = document.getElementById('analysisDistrictFilter'); distSelect.innerHTML = '<option value="all">ทุกอำเภอ</option>';
             [...distSet].sort().forEach(d => distSelect.innerHTML += `<option value="${d}">${d}</option>`); window.filterAnalysisProjectsByDistrict();
             document.getElementById('analysisContent').classList.add('hidden'); document.getElementById('analysisContent').classList.remove('flex'); document.getElementById('analysisEmpty').classList.remove('hidden'); document.getElementById('analysisModal').classList.remove('hidden');
@@ -4015,7 +4249,7 @@
 
         window.filterAnalysisProjectsByDistrict = function() {
             const selectedDist = document.getElementById('analysisDistrictFilter').value; const sel = document.getElementById('analysisProjectSelect'); sel.innerHTML = '<option disabled selected>เลือกโครงการที่จะวิเคราะห์...</option>';
-            const filteredProjects = selectedDist === 'all' ? window.projects : window.projects.filter(p => p.district === selectedDist);
+            const filteredProjects = window.projects.filter(p => !window.isArchivedCoordinationProject(p) && (selectedDist === 'all' || p.district === selectedDist));
             filteredProjects.forEach(p => sel.innerHTML += `<option value="${p.id}">${p.name}</option>`);
             document.getElementById('analysisContent').classList.add('hidden'); document.getElementById('analysisContent').classList.remove('flex'); document.getElementById('analysisEmpty').classList.remove('hidden');
         };
@@ -4289,7 +4523,7 @@
 
         window.populateDashboardFilters = function() {
             const yearSet = new Set(); const typeSet = new Set(); const distSet = new Set();
-            window.projects.forEach(p => { if (p.year && p.year !== '-') yearSet.add(p.year); if (p.budgetType && p.budgetType !== '-') typeSet.add(p.budgetType); if (p.district && p.district !== '-') distSet.add(p.district); });
+            window.projects.forEach(p => { if (window.isArchivedCoordinationProject(p)) return; if (p.year && p.year !== '-') yearSet.add(p.year); if (p.budgetType && p.budgetType !== '-') typeSet.add(p.budgetType); if (p.district && p.district !== '-') distSet.add(p.district); });
             const yearSelect = document.getElementById('dbFilterYear'); const typeSelect = document.getElementById('dbFilterBudgetType'); const distSelect = document.getElementById('dbFilterDistrict');
             const currYear = yearSelect.value || 'all'; const currType = typeSelect.value || 'all'; const currDist = distSelect.value || 'all';
             yearSelect.innerHTML = '<option value="all">ทั้งหมด</option>'; [...yearSet].sort().reverse().forEach(y => yearSelect.innerHTML += `<option value="${y}">${y}</option>`); yearSelect.value = yearSet.has(currYear) ? currYear : 'all';
@@ -4569,6 +4803,69 @@
                     return true;
                 } catch (error) {
                     console.error('Promotion Batch Error:', error);
+                    return false;
+                }
+            };
+
+            window.returnLinkedProjectInCloud = async function(sourceId, ordinanceId, sourceUpdate, imageItems) {
+                if (!window.currentUser) return true;
+                try {
+                    const imageRefs = (Array.isArray(imageItems) ? imageItems : []).filter(window.isFirestoreImageRef);
+                    if (imageRefs.length > 450) throw new Error('มีรูปภาพจำนวนมากเกินขีดจำกัด กรุณาเก็บเข้าคลังแทนและติดต่อผู้ดูแลระบบ');
+                    const batch = writeBatch(db);
+                    batch.set(doc(db, 'projects', String(sourceId)), sourceUpdate, { merge:true });
+                    batch.delete(doc(db, 'projects', String(ordinanceId)));
+                    imageRefs.forEach(item => batch.delete(doc(db, 'projectImages', window.getFirestoreImageId(item))));
+                    await batch.commit();
+                    return true;
+                } catch (error) {
+                    console.error('Return linked project error:', error);
+                    return false;
+                }
+            };
+
+            window.archiveLinkedProjectsInCloud = async function(sourceId, ordinanceId, archiveUpdate) {
+                if (!window.currentUser) return true;
+                try {
+                    const batch = writeBatch(db);
+                    batch.set(doc(db, 'projects', String(sourceId)), archiveUpdate, { merge:true });
+                    batch.set(doc(db, 'projects', String(ordinanceId)), archiveUpdate, { merge:true });
+                    await batch.commit();
+                    return true;
+                } catch (error) {
+                    console.error('Archive linked projects error:', error);
+                    return false;
+                }
+            };
+
+            window.restoreLinkedProjectsInCloud = async function(projectIds, restoreUpdate) {
+                if (!window.currentUser) return true;
+                try {
+                    const ids = [...new Set((Array.isArray(projectIds) ? projectIds : []).map(String).filter(Boolean))];
+                    if (!ids.length) return false;
+                    const batch = writeBatch(db);
+                    ids.forEach(id => batch.set(doc(db, 'projects', id), restoreUpdate, { merge:true }));
+                    await batch.commit();
+                    return true;
+                } catch (error) {
+                    console.error('Restore linked projects error:', error);
+                    return false;
+                }
+            };
+
+            window.deleteLinkedProjectsInCloud = async function(sourceId, ordinanceId, imageItems) {
+                if (!window.currentUser) return true;
+                try {
+                    const imageRefs = (Array.isArray(imageItems) ? imageItems : []).filter(window.isFirestoreImageRef);
+                    if (imageRefs.length > 450) throw new Error('มีรูปภาพจำนวนมากเกินขีดจำกัด กรุณาเก็บเข้าคลังแทนและติดต่อผู้ดูแลระบบ');
+                    const batch = writeBatch(db);
+                    batch.delete(doc(db, 'projects', String(sourceId)));
+                    batch.delete(doc(db, 'projects', String(ordinanceId)));
+                    imageRefs.forEach(item => batch.delete(doc(db, 'projectImages', window.getFirestoreImageId(item))));
+                    await batch.commit();
+                    return true;
+                } catch (error) {
+                    console.error('Delete linked projects error:', error);
                     return false;
                 }
             };
