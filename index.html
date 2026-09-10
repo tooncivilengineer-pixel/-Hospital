@@ -41,7 +41,18 @@
         details[open] summary ~ * { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* V37: linked coordination/ordinance project management */
+        /* V38: alert-center print preview and report */
+        /* V39: responsible-position field for coordination workflow and downstream views */
+        /* V40: unify coordination sub-status with the 12-stage project workflow */
+        /* V41: separate coordination workflow from the construction-project workflow */
+        /* V42: align all coordination step names with the approved 11-step workflow */
+        /* V43: use one project-name resolver across alerts, dialogs, reports and dashboards */
+        /* V44: identify and summarize project categories in the alert print report */
+        /* V45: expose incomplete/orphan project records and allow safe admin deletion from alerts */
+        /* V46: simplify general-project status fields to responsible person, position and note */
+        /* V47: remove coordination priority/follow-up date and use a single note field */
+        /* V48: track State Property land-use permission and construction readiness */
+        /* V49: move land-right status to the hospital master registry and color hospital map icons */
         .survey-print-page { box-sizing: border-box; background: #fff; width: 100%; min-height: 210mm; }
         .survey-photo-page { border-top: 8px solid #1e3a8a; }
         .survey-photo-grid { display: grid; gap: 5mm; margin-top: 5mm; }
@@ -63,22 +74,27 @@
         .custom-hospital-marker { z-index: 1000 !important; }
         .custom-hospital-marker > div {
             animation: none !important;
-            box-shadow: 0 3px 10px rgba(127, 29, 29, 0.35);
+            box-shadow: 0 3px 10px rgba(15, 23, 42, 0.35);
         }
 
         /* สำหรับการพิมพ์รายงาน PDF */
         @media print {
-            body:not(.printing-v124):not(.printing-survey) @page { size: A4 portrait; margin: 10mm; }
+            body:not(.printing-v124):not(.printing-survey):not(.printing-alerts) @page { size: A4 portrait; margin: 10mm; }
             body.printing-v124 @page { size: A4 landscape; margin: 10mm; } 
             body.printing-survey @page { size: A4 landscape; margin: 10mm; } 
             
             body { background: white; margin: 0; padding: 0; overflow: visible; height: auto; width: auto; }
-            body:not(.printing-v124):not(.printing-survey) > *:not(#reportModal) { display: none !important; }
+            body:not(.printing-v124):not(.printing-survey):not(.printing-alerts) > *:not(#reportModal) { display: none !important; }
             body.printing-v124 > *:not(#reportV124Modal) { display: none !important; }
             body.printing-survey > *:not(#reportSurveyModal) { display: none !important; }
+            body.printing-alerts > *:not(#notificationPrintModal) { display: none !important; }
             
-            #reportModal, #reportV124Modal, #reportSurveyModal { position: relative !important; display: block !important; background: white !important; padding: 0 !important; z-index: auto !important; height: auto !important; overflow: visible !important; }
-            #printArea, #printAreaV124, #printAreaSurvey { box-shadow: none !important; width: 100% !important; max-width: none !important; margin: 0 !important; border: none !important; padding: 0 !important;}
+            #reportModal, #reportV124Modal, #reportSurveyModal, #notificationPrintModal { position: relative !important; display: block !important; background: white !important; padding: 0 !important; z-index: auto !important; height: auto !important; overflow: visible !important; }
+            #printArea, #printAreaV124, #printAreaSurvey, #notificationPrintArea { box-shadow: none !important; width: 100% !important; max-width: none !important; margin: 0 !important; border: none !important; padding: 0 !important;}
+            body.printing-alerts #notificationPrintArea { font-size: 10px !important; }
+            body.printing-alerts .alert-print-table thead { display: table-header-group; }
+            body.printing-alerts .alert-print-table tr { break-inside: avoid; page-break-inside: avoid; }
+            body.printing-alerts .alert-print-color { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             body.printing-survey .survey-print-page { width: 100% !important; min-height: 190mm; padding: 7mm !important; break-after: page; page-break-after: always; }
             body.printing-survey .survey-print-page:last-child { break-after: auto; page-break-after: auto; }
             body.printing-survey .survey-photo-page { border-top-width: 2mm; }
@@ -271,7 +287,7 @@
             </button>
             <button onclick="window.openHospitalModal()" class="admin-only bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium py-1.5 px-2.5 border border-rose-700 rounded shadow-sm flex items-center gap-1.5 transition-all font-bold">
                 <i class="fa-solid fa-house-medical w-3 text-center"></i>
-                <span>ป้อนตำแหน่ง รพ.สต.</span>
+                <span>จัดการข้อมูล รพ.สต.</span>
             </button>
             <button onclick="window.openSearchModal()" class="bg-white hover:bg-gray-50 text-gray-700 text-xs font-medium py-1.5 px-2.5 border border-gray-300 rounded shadow-sm flex items-center gap-1.5 transition-all font-bold">
                 <i class="fa-solid fa-magnifying-glass-chart text-blue-600 w-3 text-center"></i>
@@ -320,6 +336,15 @@
         <div id="coordinateDisplay" class="absolute bottom-4 left-4 z-[500] bg-white bg-opacity-90 px-3 py-2 rounded-lg shadow-sm border border-gray-300 text-[11px] font-mono text-gray-700 pointer-events-none">
             <div><span class="font-bold text-blue-700">WGS84:</span> Lat <span id="coordLat">-</span>, Lng <span id="coordLng">-</span></div>
             <div class="mt-0.5"><span class="font-bold text-orange-600">UTM 47N:</span> <span id="coordUTM">-</span></div>
+        </div>
+        <div class="absolute top-4 right-4 z-[500] bg-white bg-opacity-95 px-3 py-2.5 rounded-lg shadow-md border border-gray-200 text-[10px] text-gray-700 pointer-events-none">
+            <div class="font-bold text-gray-800 mb-1.5"><i class="fa-solid fa-file-shield mr-1 text-blue-700"></i> สิทธิการใช้ที่ดินราชพัสดุ</div>
+            <div class="grid grid-cols-[12px_1fr] gap-x-2 gap-y-1 items-center">
+                <span class="w-3 h-3 rounded-full bg-green-600"></span><span>ได้รับอนุญาตแล้ว</span>
+                <span class="w-3 h-3 rounded-full bg-red-600"></span><span>ยังไม่ได้รับอนุญาต</span>
+                <span class="w-3 h-3 rounded-full bg-amber-500"></span><span>รอตรวจสอบข้อมูล</span>
+                <span class="w-3 h-3 rounded-full bg-slate-500"></span><span>ไม่ใช่ที่ดินราชพัสดุ</span>
+            </div>
         </div>
     </main>
 
@@ -444,12 +469,10 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mt-4 pt-4 border-t border-gray-100">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 pt-4 border-t border-gray-100">
                                 <div><label class="block text-[10px] font-bold text-gray-500 mb-1">ผู้รับผิดชอบปัจจุบัน</label><input type="text" id="pCurrentResponsible" class="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm" placeholder="ชื่อเจ้าหน้าที่/หน่วยงาน"></div>
-                                <div><label class="block text-[10px] font-bold text-gray-500 mb-1">วันที่เริ่มขั้นตอนนี้</label><input type="date" id="pStageStartDate" class="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm"></div>
-                                <div><label class="block text-[10px] font-bold text-gray-500 mb-1">กำหนดแล้วเสร็จขั้นตอน</label><input type="date" id="pStageDueDate" class="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm"></div>
-                                <div><label class="block text-[10px] font-bold text-gray-500 mb-1">ความครบถ้วนของเอกสาร</label><select id="pDocumentsStatus" class="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm font-bold"><option value="complete">เอกสารครบ</option><option value="incomplete">เอกสารยังไม่ครบ</option><option value="not_required">ยังไม่ถึงขั้นใช้เอกสาร</option></select></div>
-                                <div class="md:col-span-2 lg:col-span-4"><label class="block text-[10px] font-bold text-gray-500 mb-1">สิ่งที่ต้องดำเนินการต่อ</label><input type="text" id="pNextAction" class="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm" placeholder="ระบุงานถัดไป เพื่อให้ผู้บริหารทราบว่าต้องเร่งรัดเรื่องใด"></div>
+                                <div><label class="block text-[10px] font-bold text-gray-500 mb-1">ตำแหน่ง</label><input type="text" id="pResponsiblePosition" list="inspectorPosList" class="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm" placeholder="ตำแหน่งผู้รับผิดชอบ"></div>
+                                <div class="md:col-span-2"><label class="block text-[10px] font-bold text-gray-500 mb-1">หมายเหตุ</label><input type="text" id="pNote" class="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm" placeholder="ระบุหมายเหตุหรือรายละเอียดเพิ่มเติม"></div>
                             </div>
                             <div class="mt-4 pt-4 border-t border-gray-100"><div class="flex justify-between items-center mb-2"><span class="text-[10px] font-bold text-gray-500">เส้นทางโครงการ 12 ขั้นตอน</span><span id="pWorkflowLabel" class="text-[10px] font-bold text-blue-700"></span></div><div id="pWorkflowProgress" class="flex gap-1 overflow-x-auto pb-1"></div></div>
                             <div id="contractDatesSection" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-100 hidden">
@@ -552,7 +575,7 @@
                     <div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
                         <h3 class="text-md font-bold text-blue-900 mb-4 border-b pb-2"><i class="fa-solid fa-building text-blue-700 mr-2"></i> 1. ข้อมูลโครงการ</h3>
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-4 mb-4">
-                            <div class="md:col-span-3">
+                            <div class="md:col-span-4">
                                 <label class="block text-sm font-bold text-gray-700 mb-1">อำเภอ <span class="text-red-500">*</span></label>
                                 <select id="sDistrict" onchange="window.updateHospitalList()" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white">
                                     <option value="เมืองพิษณุโลก">เมืองพิษณุโลก</option>
@@ -616,7 +639,7 @@
                                 <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="sCheck1" checked class="w-4 h-4 text-blue-600 rounded"> <span class="text-sm font-bold text-gray-700">1. ขนาดพื้นที่เป็นไปตามกรอบฯ</span></label>
                                 <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="sCheck3" checked class="w-4 h-4 text-blue-600 rounded"> <span class="text-sm font-bold text-gray-700">3. ความพร้อมของพื้นที่</span></label>
                                 
-                                <label class="flex items-start gap-2 cursor-pointer mt-2"><input type="checkbox" id="sCheck5" checked class="w-4 h-4 text-blue-600 rounded mt-1"> <span class="text-sm font-bold text-gray-700">5. อื่นๆ</span></label>
+                                <label class="flex items-start gap-2 cursor-pointer mt-2"><input type="checkbox" id="sCheck5" checked class="w-4 h-4 text-blue-600 rounded mt-1"> <span class="text-sm font-bold text-gray-700">4. อื่นๆ</span></label>
                                 <div class="ml-6 space-y-2">
                                     <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="w-3.5 h-3.5 rounded border-gray-300"> <span class="text-sm text-gray-600">รอตรวจสอบพื้นที่</span></label>
                                     <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="w-3.5 h-3.5 rounded border-gray-300"> <span class="text-sm text-gray-600">รอเอกสารการขออนุญาต</span></label>
@@ -628,7 +651,6 @@
                             </div>
                             <div class="space-y-3">
                                 <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="sCheck2" class="w-4 h-4 text-blue-600 rounded"> <span class="text-sm font-bold text-gray-700">2. พิกัดทางภูมิศาสตร์ถูกต้อง</span></label>
-                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="sCheck4" class="w-4 h-4 text-blue-600 rounded"> <span class="text-sm font-bold text-gray-700">4. หนังสืออนุญาตการใช้พื้นที่</span></label>
                             </div>
                         </div>
                     </div>
@@ -675,7 +697,7 @@
                         <div class="flex flex-wrap justify-between items-center gap-3 mb-4 border-b pb-3">
                             <div>
                                 <h3 class="text-md font-bold text-blue-900"><i class="fa-solid fa-route text-blue-700 mr-2"></i> 7. การดำเนินการหลังรับเรื่องประสานแผน</h3>
-                                <p class="text-[11px] text-gray-500 mt-1">ติดตามว่าเรื่องอยู่ขั้นตอนไหน ใครรับผิดชอบ และได้ดำเนินการอะไรแล้ว</p>
+                                <p class="text-[11px] text-gray-500 mt-1">ติดตามว่าเรื่องอยู่ขั้นตอนไหน ใครรับผิดชอบ และได้ดำเนินการอะไรแล้ว · ขั้นตอนหลักจะเลื่อนเมื่อผลเป็น “ดำเนินการแล้ว”</p>
                             </div>
                             <span class="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full font-bold">Coordination Workflow</span>
                         </div>
@@ -683,40 +705,33 @@
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-4 bg-blue-50 border border-blue-100 rounded-xl p-4">
                             <div class="md:col-span-4">
                                 <label class="block text-xs font-bold text-gray-700 mb-1">สถานะปัจจุบัน</label>
-                                <select id="sCoordStatus" class="w-full px-3 py-2 border border-blue-200 rounded-lg bg-white font-bold text-blue-800 focus:ring-2 focus:ring-blue-400">
-                                    <option value="รับเรื่องแล้ว">รับเรื่องแล้ว</option>
-                                    <option value="ตรวจสอบข้อมูลเบื้องต้น">ตรวจสอบข้อมูลเบื้องต้น</option>
+                                <select id="sCoordStatus" onchange="window.syncCoordinationSelectionFromStatus(this.value)" class="w-full px-3 py-2 border border-blue-200 rounded-lg bg-white font-bold text-blue-800 focus:ring-2 focus:ring-blue-400">
+                                    <option value="รับเรื่องจาก รพ.สต.">รับเรื่องจาก รพ.สต.</option>
+                                    <option value="ตรวจสอบข้อมูลและเอกสาร">ตรวจสอบข้อมูลและเอกสาร</option>
+                                    <option value="ติดต่อประสานงาน">ติดต่อประสานงาน</option>
                                     <option value="นัดหมายสำรวจ">นัดหมายสำรวจ</option>
-                                    <option value="สำรวจพื้นที่แล้ว">สำรวจพื้นที่แล้ว</option>
-                                    <option value="จัดทำแบบและประมาณราคา">จัดทำแบบและประมาณราคา</option>
-                                    <option value="ตรวจสอบแบบและราคา">ตรวจสอบแบบและราคา</option>
-                                    <option value="จัดเตรียมเอกสารส่งกลับ">จัดเตรียมเอกสารส่งกลับ</option>
-                                    <option value="ส่งเอกสารให้ รพ.สต. แล้ว">ส่งเอกสารให้ รพ.สต. แล้ว</option>
-                                    <option value="รอข้อมูลเพิ่มเติมจาก รพ.สต.">รอข้อมูลเพิ่มเติมจาก รพ.สต.</option>
+                                    <option value="สำรวจพื้นที่">สำรวจพื้นที่</option>
+                                    <option value="จัดทำแบบรูปรายการ">จัดทำแบบรูปรายการ</option>
+                                    <option value="จัดทำประมาณราคา">จัดทำประมาณราคา</option>
+                                    <option value="จัดส่งประมาณราคาให้ รพ.สต.">จัดส่งประมาณราคาให้ รพ.สต.</option>
+                                    <option value="ส่งแผนงานให้กองยุทธศาสตร์">ส่งแผนงานให้กองยุทธศาสตร์</option>
+                                    <option value="โครงการถูกคัดเลือกเข้าแผน">โครงการถูกคัดเลือกเข้าแผน</option>
+                                    <option value="โครงการถูกคัดเลือกเป็นข้อบัญญัติ">โครงการถูกคัดเลือกเป็นข้อบัญญัติ</option>
+                                    <option value="รับข้อมูลเพิ่มเติม">รับข้อมูลเพิ่มเติม</option>
                                     <option value="พักเรื่อง">พักเรื่อง</option>
-                                    <option value="สิ้นสุดการประสานแผน">สิ้นสุดการประสานแผน</option>
-                                    <option value="ยกระดับเป็นโครงการข้อบัญญัติแล้ว">ยกระดับเป็นโครงการข้อบัญญัติแล้ว</option>
                                 </select>
                             </div>
                             <div class="md:col-span-3">
                                 <label class="block text-xs font-bold text-gray-700 mb-1">ผู้รับผิดชอบปัจจุบัน</label>
                                 <input type="text" id="sCoordResponsible" list="inspectorNameList" class="w-full px-3 py-2 border border-blue-200 rounded-lg bg-white" placeholder="ชื่อเจ้าหน้าที่">
                             </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-xs font-bold text-gray-700 mb-1">ระดับความเร่งด่วน</label>
-                                <select id="sCoordPriority" class="w-full px-3 py-2 border border-blue-200 rounded-lg bg-white">
-                                    <option value="ปกติ">ปกติ</option>
-                                    <option value="เร่งด่วน">เร่งด่วน</option>
-                                    <option value="เร่งด่วนมาก">เร่งด่วนมาก</option>
-                                </select>
-                            </div>
-                            <div class="md:col-span-3">
-                                <label class="block text-xs font-bold text-gray-700 mb-1">กำหนดติดตามครั้งถัดไป</label>
-                                <input type="date" id="sCoordNextDueDate" class="w-full px-3 py-2 border border-blue-200 rounded-lg bg-white">
+                            <div class="md:col-span-4">
+                                <label class="block text-xs font-bold text-gray-700 mb-1">ตำแหน่งผู้รับผิดชอบ</label>
+                                <input type="text" id="sCoordResponsiblePosition" list="inspectorPosList" class="w-full px-3 py-2 border border-blue-200 rounded-lg bg-white" placeholder="ตำแหน่ง">
                             </div>
                             <div class="md:col-span-12">
-                                <label class="block text-xs font-bold text-gray-700 mb-1">สิ่งที่ต้องดำเนินการต่อ</label>
-                                <textarea id="sCoordNextAction" rows="2" class="w-full px-3 py-2 border border-blue-200 rounded-lg bg-white" placeholder="เช่น นัดหมาย รพ.สต. เข้าสำรวจ / จัดทำประมาณราคา / ส่งเอกสารทางระบบสารบรรณ"></textarea>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">หมายเหตุ</label>
+                                <textarea id="sCoordNote" rows="2" class="w-full px-3 py-2 border border-blue-200 rounded-lg bg-white" placeholder="ระบุหมายเหตุหรือรายละเอียดเพิ่มเติม"></textarea>
                             </div>
                         </div>
 
@@ -736,17 +751,17 @@
                         <div class="mt-5 bg-amber-50 border border-amber-200 rounded-xl p-4">
                             <div class="flex flex-wrap justify-between items-start gap-3 mb-3">
                                 <div>
-                                    <h4 class="text-sm font-bold text-amber-900"><i class="fa-solid fa-stamp mr-2"></i>ผลการพิจารณาเข้าสู่ข้อบัญญัติ</h4>
-                                    <p class="text-[10px] text-amber-700 mt-1">ใช้สำหรับยกระดับโครงการประสานแผนเป็นโครงการตามข้อบัญญัติ โดยยังเก็บประวัติต้นฉบับไว้</p>
+                                    <h4 class="text-sm font-bold text-amber-900"><i class="fa-solid fa-stamp mr-2"></i>ผลการพิจารณาเป็นข้อบัญญัติ</h4>
+                                    <p class="text-[10px] text-amber-700 mt-1">เมื่อถึงขั้นที่ 11 สามารถสร้างแฟ้มโครงการตามข้อบัญญัติได้ โดยระบบยังเก็บประวัติโครงการประสานแผนต้นฉบับไว้</p>
                                 </div>
                                 <span id="coordPromotionLinkBadge" class="hidden text-[10px] bg-green-100 text-green-700 border border-green-200 px-3 py-1 rounded-full font-bold"><i class="fa-solid fa-link mr-1"></i>เชื่อมโครงการข้อบัญญัติแล้ว</span>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
                                 <div class="md:col-span-5">
                                     <label class="block text-xs font-bold text-gray-700 mb-1">ผลการพิจารณา</label>
-                                    <select id="sCoordSelectionResult" onchange="window.toggleCoordinationPromotionUI()" class="w-full px-3 py-2 border border-amber-300 rounded-lg bg-white font-bold text-amber-900 focus:ring-2 focus:ring-amber-400">
+                                    <select id="sCoordSelectionResult" onchange="window.syncCoordinationStatusFromSelection()" class="w-full px-3 py-2 border border-amber-300 rounded-lg bg-white font-bold text-amber-900 focus:ring-2 focus:ring-amber-400">
                                         <option value="อยู่ระหว่างพิจารณา">อยู่ระหว่างพิจารณา</option>
-                                        <option value="ได้รับคัดเลือกเข้าสู่ข้อบัญญัติ">ได้รับคัดเลือกเข้าสู่ข้อบัญญัติ</option>
+                                        <option value="ได้รับคัดเลือกเข้าสู่ข้อบัญญัติ">โครงการถูกคัดเลือกเป็นข้อบัญญัติ</option>
                                         <option value="ไม่ได้รับการคัดเลือก">ไม่ได้รับการคัดเลือก</option>
                                         <option value="เลื่อนไปพิจารณาปีถัดไป">เลื่อนไปพิจารณาปีถัดไป</option>
                                     </select>
@@ -762,8 +777,8 @@
                             </div>
                             <div id="coordPromotionActionPanel" class="hidden mt-4 bg-white border border-green-200 rounded-lg p-3">
                                 <div id="coordPromotionReadyBox" class="flex flex-wrap justify-between items-center gap-3">
-                                    <div class="text-xs text-gray-600"><b class="text-green-700">พร้อมยกระดับโครงการ</b><br>กรุณาบันทึกข้อมูลประสานแผนก่อน แล้วจึงสร้างโครงการข้อบัญญัติ</div>
-                                    <button id="btnPromoteCoordination" type="button" onclick="window.openPromoteCoordinationModal(window.editingProjectId)" class="admin-only bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-sm"><i class="fa-solid fa-arrow-up-right-dots mr-1"></i> ยกระดับเป็นโครงการข้อบัญญัติ</button>
+                                    <div class="text-xs text-gray-600"><b class="text-green-700">พร้อมสร้างโครงการข้อบัญญัติ</b><br>กรุณาบันทึกขั้นที่ 11 ก่อน แล้วจึงสร้างแฟ้มโครงการข้อบัญญัติ</div>
+                                    <button id="btnPromoteCoordination" type="button" onclick="window.openPromoteCoordinationModal(window.editingProjectId)" class="admin-only bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-sm"><i class="fa-solid fa-arrow-up-right-dots mr-1"></i> สร้างโครงการข้อบัญญัติ</button>
                                 </div>
                                 <div id="coordPromotionCompletedBox" class="hidden flex-wrap justify-between items-center gap-3">
                                     <div class="text-xs text-green-800"><i class="fa-solid fa-circle-check mr-1"></i><b>สร้างโครงการข้อบัญญัติเรียบร้อยแล้ว</b><div id="coordPromotionCompletedMeta" class="text-gray-500 mt-1"></div></div>
@@ -793,7 +808,7 @@
     <div id="hospitalModal" class="fixed inset-0 bg-black bg-opacity-50 z-[2000] hidden flex justify-center items-center text-gray-700 no-print">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all custom-scrollbar">
             <div class="bg-gradient-to-r from-rose-600 to-pink-600 text-white px-6 py-4 flex justify-between items-center shadow-sm font-bold">
-                <h2 class="text-lg"><i class="fa-solid fa-map-location-dot mr-2"></i> จัดการพิกัดที่ตั้ง รพ.สต.</h2>
+                <h2 class="text-lg"><i class="fa-solid fa-house-medical-circle-check mr-2"></i> จัดการข้อมูลหลัก รพ.สต.</h2>
                 <button type="button" onclick="window.closeHospitalModal()" class="text-white hover:text-rose-200"><i class="fa-solid fa-times text-xl"></i></button>
             </div>
             <form id="hospitalForm" onsubmit="window.saveHospital(event)" class="p-6 space-y-4 bg-gray-50">
@@ -837,10 +852,20 @@
                             </div>
                         </div>
                     </div>
+                    <div class="border-t border-gray-100 pt-4 mt-2">
+                        <label class="block text-sm font-bold text-rose-800 mb-2"><i class="fa-solid fa-file-shield mr-1"></i> 4. สถานะการอนุญาตให้ใช้ที่ดินราชพัสดุ</label>
+                        <select id="hospLandPermissionStatus" onchange="window.updateHospitalLandPermissionNotice()" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white font-bold text-gray-700 focus:ring-2 focus:ring-rose-500">
+                            <option value="checking">อยู่ระหว่างตรวจสอบข้อมูล</option>
+                            <option value="approved">ได้รับอนุญาตให้ใช้ที่ดินราชพัสดุแล้ว</option>
+                            <option value="not_approved">ยังไม่ได้รับอนุญาตให้ใช้ที่ดินราชพัสดุ</option>
+                            <option value="not_state_property">ไม่ใช่ที่ดินราชพัสดุ</option>
+                        </select>
+                        <div id="hospLandPermissionNotice" class="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800"></div>
+                    </div>
                 </div>
                 <div class="flex justify-end gap-3 mt-4 pt-2">
                     <button type="button" onclick="window.closeHospitalModal()" class="px-5 py-2.5 text-gray-600 bg-gray-200 hover:bg-gray-300 rounded-lg font-bold transition-colors shadow-sm">ยกเลิก</button>
-                    <button type="submit" class="px-8 py-2.5 text-white bg-rose-600 hover:bg-rose-700 rounded-lg font-bold shadow-md transition-colors"><i class="fa-solid fa-save mr-1"></i> บันทึกพิกัด</button>
+                    <button type="submit" class="px-8 py-2.5 text-white bg-rose-600 hover:bg-rose-700 rounded-lg font-bold shadow-md transition-colors"><i class="fa-solid fa-save mr-1"></i> บันทึกข้อมูล รพ.สต.</button>
                 </div>
             </form>
         </div>
@@ -1134,7 +1159,10 @@
         <div class="bg-slate-50 rounded-2xl shadow-2xl w-full max-w-[1100px] max-h-[92vh] flex flex-col overflow-hidden">
             <div class="bg-gradient-to-r from-red-800 to-orange-600 text-white px-6 py-4 flex justify-between items-center font-bold shadow-md">
                 <div><h2 class="text-xl"><i class="fa-solid fa-bell mr-2"></i>ศูนย์แจ้งเตือนและเร่งรัด</h2><p class="text-xs text-red-100 mt-1">แสดงเหตุผล ผู้รับผิดชอบ งานถัดไป และจำนวนวันที่ค้าง</p></div>
-                <button type="button" onclick="window.closeNotificationCenter()" class="hover:text-red-100"><i class="fa-solid fa-times text-2xl"></i></button>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="window.openNotificationPrintPreview()" class="bg-white text-red-800 hover:bg-red-50 px-4 py-2 rounded-lg text-sm font-bold shadow-sm"><i class="fa-solid fa-print mr-1"></i> พิมพ์รายงาน</button>
+                    <button type="button" onclick="window.closeNotificationCenter()" class="hover:text-red-100 w-9 h-9"><i class="fa-solid fa-times text-2xl"></i></button>
+                </div>
             </div>
             <div class="p-4 bg-white border-b flex flex-wrap gap-3 items-end">
                 <div><label class="block text-[10px] font-bold text-gray-500 mb-1">ระดับ</label><select id="alertSeverityFilter" onchange="window.renderNotificationCenter()" class="border rounded px-3 py-2 text-sm font-bold"><option value="all">ทุกระดับ</option><option value="red">แดง—เร่งด่วน</option><option value="orange">ส้ม—เฝ้าระวัง</option><option value="yellow">เหลือง—ควรติดตาม</option><option value="green">เขียว—ปกติ</option></select></div>
@@ -1145,6 +1173,15 @@
             </div>
             <div id="notificationCenterList" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar"></div>
         </div>
+    </div>
+
+    <!-- Notification Center Print Preview -->
+    <div id="notificationPrintModal" class="fixed inset-0 bg-slate-900 bg-opacity-80 z-[4300] hidden justify-center items-start overflow-y-auto py-6">
+        <div class="fixed top-3 right-5 z-[4350] bg-white rounded-xl shadow-2xl border border-gray-200 p-2 flex gap-2 no-print">
+            <button type="button" onclick="window.printNotificationReport()" class="bg-red-700 hover:bg-red-800 text-white px-5 py-2.5 rounded-lg font-bold shadow-sm"><i class="fa-solid fa-print mr-2"></i>พิมพ์ / บันทึก PDF</button>
+            <button type="button" onclick="window.closeNotificationPrintPreview()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-lg font-bold"><i class="fa-solid fa-xmark mr-1"></i>ปิด</button>
+        </div>
+        <div id="notificationPrintArea" class="bg-white w-[297mm] min-h-[210mm] shadow-2xl border border-gray-300 mx-auto mt-12 p-[8mm] text-gray-900"></div>
     </div>
 
     <!-- Dashboard Modal -->
@@ -1224,7 +1261,7 @@
     <div id="promoteCoordinationModal" class="fixed inset-0 bg-slate-950 bg-opacity-65 z-[3800] hidden items-center justify-center p-3 md:p-6 no-print" onclick="if(event.target === this) window.closePromoteCoordinationModal()">
         <div class="bg-slate-50 rounded-2xl shadow-2xl w-full max-w-[900px] max-h-[94vh] flex flex-col overflow-hidden border border-white">
             <div class="bg-gradient-to-r from-emerald-800 to-green-600 text-white px-6 py-4 flex justify-between items-start gap-4 shadow-md">
-                <div><div class="text-xs text-green-100 font-bold"><i class="fa-solid fa-arrow-up-right-dots mr-1"></i> ยกระดับโครงการประสานแผน</div><h2 class="text-xl font-bold mt-1">สร้างโครงการตามข้อบัญญัติ</h2><p class="text-xs text-green-100 mt-1">โครงการใหม่จะเริ่มที่ขั้นที่ 5 — จัดสรรงบประมาณ</p></div>
+                <div><div class="text-xs text-green-100 font-bold"><i class="fa-solid fa-arrow-up-right-dots mr-1"></i> ขั้นที่ 11 — โครงการถูกคัดเลือกเป็นข้อบัญญัติ</div><h2 class="text-xl font-bold mt-1">สร้างแฟ้มโครงการตามข้อบัญญัติ</h2><p class="text-xs text-green-100 mt-1">แฟ้มใหม่จะเริ่มที่ขั้นที่ 5 — จัดสรรงบประมาณ</p></div>
                 <button type="button" onclick="window.closePromoteCoordinationModal()" class="w-10 h-10 rounded-full bg-white bg-opacity-10 hover:bg-opacity-20"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <form id="promoteCoordinationForm" onsubmit="window.confirmPromoteCoordination(event)" class="flex-1 overflow-y-auto p-5 md:p-6 custom-scrollbar">
@@ -1241,11 +1278,11 @@
                     <div class="md:col-span-3"><label class="block text-xs font-bold text-gray-700 mb-1">งบประมาณที่ได้รับ (บาท) <span class="text-red-500">*</span></label><input id="promoteBudget" type="number" min="0" step="0.01" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-right font-bold text-green-700" placeholder="0.00"></div>
                     <div class="md:col-span-3"><label class="block text-xs font-bold text-gray-700 mb-1">เล่มข้อบัญญัติ</label><input id="promoteVolume" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-center" placeholder="-"></div>
                     <div class="md:col-span-3"><label class="block text-xs font-bold text-gray-700 mb-1">หน้าข้อบัญญัติ</label><input id="promotePage" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-center" placeholder="-"></div>
-                    <div class="md:col-span-4"><label class="block text-xs font-bold text-gray-700 mb-1">วันที่ยกระดับโครงการ <span class="text-red-500">*</span></label><input id="promoteDate" type="date" required class="w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
+                    <div class="md:col-span-4"><label class="block text-xs font-bold text-gray-700 mb-1">วันที่สร้างโครงการข้อบัญญัติ <span class="text-red-500">*</span></label><input id="promoteDate" type="date" required class="w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
                     <div class="md:col-span-4"><label class="block text-xs font-bold text-gray-700 mb-1">ผู้รับผิดชอบปัจจุบัน</label><input id="promoteResponsible" list="inspectorNameList" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="ชื่อเจ้าหน้าที่/หน่วยงาน"></div>
                     <div class="md:col-span-4"><label class="block text-xs font-bold text-gray-700 mb-1">สถานะเอกสาร</label><select id="promoteDocumentsStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg font-bold"><option value="incomplete">เอกสารยังไม่ครบ</option><option value="complete">เอกสารครบ</option><option value="not_required">ยังไม่ถึงขั้นใช้เอกสาร</option></select></div>
                     <div class="md:col-span-12"><label class="block text-xs font-bold text-gray-700 mb-1">สิ่งที่ต้องดำเนินการต่อ</label><textarea id="promoteNextAction" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg">ตรวจสอบรายละเอียดข้อบัญญัติและเตรียมดำเนินการจัดซื้อจัดจ้าง</textarea></div>
-                    <div class="md:col-span-12"><label class="block text-xs font-bold text-gray-700 mb-1">หมายเหตุการยกระดับ</label><textarea id="promoteNote" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="เลขที่มติ/หนังสืออ้างอิง หรือรายละเอียดเพิ่มเติม"></textarea></div>
+                    <div class="md:col-span-12"><label class="block text-xs font-bold text-gray-700 mb-1">หมายเหตุการสร้างแฟ้มข้อบัญญัติ</label><textarea id="promoteNote" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="เลขที่มติ/หนังสืออ้างอิง หรือรายละเอียดเพิ่มเติม"></textarea></div>
                 </div>
                 <div class="mt-5 bg-blue-50 border border-blue-200 rounded-xl p-4 text-xs text-blue-900">
                     <b><i class="fa-solid fa-shield-halved mr-1"></i>ระบบจะดำเนินการดังนี้</b>
@@ -1374,10 +1411,23 @@
 
         window.coordinationActionTypes = [
             'รับเรื่องจาก รพ.สต.', 'ตรวจสอบข้อมูลและเอกสาร', 'ติดต่อประสานงาน', 'นัดหมายสำรวจ',
-            'สำรวจพื้นที่', 'จัดทำแบบรูปรายการ', 'จัดทำประมาณราคา', 'ตรวจสอบแบบและราคา',
-            'เสนอผู้บังคับบัญชา', 'จัดทำหนังสือส่ง', 'ส่งเอกสารให้ รพ.สต.', 'รับข้อมูลเพิ่มเติม', 'อื่นๆ'
+            'สำรวจพื้นที่', 'จัดทำแบบรูปรายการ', 'จัดทำประมาณราคา', 'จัดส่งประมาณราคาให้ รพ.สต.',
+            'ส่งแผนงานให้กองยุทธศาสตร์', 'โครงการถูกคัดเลือกเข้าแผน', 'โครงการถูกคัดเลือกเป็นข้อบัญญัติ',
+            'รับข้อมูลเพิ่มเติม', 'อื่นๆ'
         ];
         window.coordinationResultStatuses = ['ดำเนินการแล้ว', 'อยู่ระหว่างดำเนินการ', 'รอดำเนินการ', 'ติดปัญหา'];
+        window.legacyCoordinationActionTypeMap = {
+            'ตรวจสอบแบบและราคา':'จัดทำประมาณราคา',
+            'เสนอผู้บังคับบัญชา':'จัดทำประมาณราคา',
+            'จัดทำหนังสือส่ง':'จัดส่งประมาณราคาให้ รพ.สต.',
+            'ส่งเอกสารให้ รพ.สต.':'จัดส่งประมาณราคาให้ รพ.สต.',
+            'สิ้นสุดการประสานแผน':'ส่งแผนงานให้กองยุทธศาสตร์',
+            'ยกระดับเป็นโครงการข้อบัญญัติแล้ว':'โครงการถูกคัดเลือกเป็นข้อบัญญัติ'
+        };
+        window.normalizeCoordinationActionType = function(type) {
+            const raw = String(type || 'ติดต่อประสานงาน');
+            return window.legacyCoordinationActionTypeMap[raw] || raw;
+        };
 
         window.updateCoordinationActionNumbers = function() {
             document.querySelectorAll('.coord-action-entry').forEach((row, index) => {
@@ -1393,23 +1443,68 @@
         window.removeCoordinationAction = function(button) {
             button.closest('.coord-action-entry')?.remove();
             window.updateCoordinationActionNumbers();
+            window.syncCoordinationStatusFromAction();
         };
 
-        window.syncCoordinationStatusFromAction = function(select) {
-            const mapping = {
-                'รับเรื่องจาก รพ.สต.': 'รับเรื่องแล้ว',
-                'ตรวจสอบข้อมูลและเอกสาร': 'ตรวจสอบข้อมูลเบื้องต้น',
+        window.coordinationActionStatusMap = {
+                'รับเรื่องจาก รพ.สต.': 'รับเรื่องจาก รพ.สต.',
+                'ตรวจสอบข้อมูลและเอกสาร': 'ตรวจสอบข้อมูลและเอกสาร',
+                'ติดต่อประสานงาน': 'ติดต่อประสานงาน',
                 'นัดหมายสำรวจ': 'นัดหมายสำรวจ',
-                'สำรวจพื้นที่': 'สำรวจพื้นที่แล้ว',
-                'จัดทำแบบรูปรายการ': 'จัดทำแบบและประมาณราคา',
-                'จัดทำประมาณราคา': 'จัดทำแบบและประมาณราคา',
-                'ตรวจสอบแบบและราคา': 'ตรวจสอบแบบและราคา',
-                'จัดทำหนังสือส่ง': 'จัดเตรียมเอกสารส่งกลับ',
-                'ส่งเอกสารให้ รพ.สต.': 'ส่งเอกสารให้ รพ.สต. แล้ว',
-                'รับข้อมูลเพิ่มเติม': 'ตรวจสอบข้อมูลเบื้องต้น'
+                'สำรวจพื้นที่': 'สำรวจพื้นที่',
+                'จัดทำแบบรูปรายการ': 'จัดทำแบบรูปรายการ',
+                'จัดทำประมาณราคา': 'จัดทำประมาณราคา',
+                'จัดส่งประมาณราคาให้ รพ.สต.': 'จัดส่งประมาณราคาให้ รพ.สต.',
+                'ส่งแผนงานให้กองยุทธศาสตร์': 'ส่งแผนงานให้กองยุทธศาสตร์',
+                'โครงการถูกคัดเลือกเข้าแผน': 'โครงการถูกคัดเลือกเข้าแผน',
+                'โครงการถูกคัดเลือกเป็นข้อบัญญัติ': 'โครงการถูกคัดเลือกเป็นข้อบัญญัติ',
+                'รับข้อมูลเพิ่มเติม': 'รับข้อมูลเพิ่มเติม'
             };
-            const status = mapping[select?.value];
-            if (status && document.getElementById('sCoordStatus')) document.getElementById('sCoordStatus').value = status;
+
+        window.syncCoordinationStatusFromAction = function() {
+            const statusInput = document.getElementById('sCoordStatus');
+            if (!statusInput) return;
+            const completed = [...document.querySelectorAll('.coord-action-entry')].map((row, index) => ({
+                index,
+                date: row.querySelector('.coord-action-date')?.value || '',
+                type: row.querySelector('.coord-action-type')?.value || '',
+                result: row.querySelector('.coord-action-result')?.value || ''
+            })).filter(item => item.result === 'ดำเนินการแล้ว' && window.coordinationActionStatusMap[item.type]);
+            completed.sort((a, b) => String(a.date).localeCompare(String(b.date)) || a.index - b.index);
+            const latest = completed[completed.length - 1];
+            if (latest) {
+                statusInput.value = window.coordinationActionStatusMap[latest.type];
+                window.syncCoordinationSelectionFromStatus(statusInput.value, latest.date);
+            }
+        };
+
+        window.syncCoordinationSelectionFromStatus = function(status, effectiveDate = '') {
+            const normalizedStatus = window.normalizeCoordinationStatus ? window.normalizeCoordinationStatus(status) : status;
+            const resultInput = document.getElementById('sCoordSelectionResult');
+            const dateInput = document.getElementById('sCoordSelectionDate');
+            if (!resultInput) return;
+            if (normalizedStatus === 'โครงการถูกคัดเลือกเป็นข้อบัญญัติ') {
+                resultInput.value = 'ได้รับคัดเลือกเข้าสู่ข้อบัญญัติ';
+                if (dateInput && !dateInput.value) dateInput.value = effectiveDate || window.todayISO();
+            } else if (!window.currentCoordinationOrdinanceProjectId && resultInput.value === 'ได้รับคัดเลือกเข้าสู่ข้อบัญญัติ') {
+                resultInput.value = 'อยู่ระหว่างพิจารณา';
+                if (dateInput) dateInput.value = '';
+            }
+            if (window.toggleCoordinationPromotionUI) window.toggleCoordinationPromotionUI();
+        };
+
+        window.syncCoordinationStatusFromSelection = function() {
+            const resultInput = document.getElementById('sCoordSelectionResult');
+            const statusInput = document.getElementById('sCoordStatus');
+            const dateInput = document.getElementById('sCoordSelectionDate');
+            if (!resultInput || !statusInput) return;
+            if (resultInput.value === 'ได้รับคัดเลือกเข้าสู่ข้อบัญญัติ') {
+                statusInput.value = 'โครงการถูกคัดเลือกเป็นข้อบัญญัติ';
+                if (dateInput && !dateInput.value) dateInput.value = window.todayISO();
+            } else if (!window.currentCoordinationOrdinanceProjectId && statusInput.value === 'โครงการถูกคัดเลือกเป็นข้อบัญญัติ') {
+                statusInput.value = 'โครงการถูกคัดเลือกเข้าแผน';
+            }
+            if (window.toggleCoordinationPromotionUI) window.toggleCoordinationPromotionUI();
         };
 
         window.addCoordinationAction = function(action = {}) {
@@ -1420,7 +1515,7 @@
             entry.className = 'coord-action-entry bg-gray-50 border border-gray-200 rounded-xl p-4 shadow-sm';
             entry.dataset.actionId = action.id || `coord_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
             entry.dataset.createdAt = action.createdAt || new Date().toISOString();
-            const actionType = action.type || 'ติดต่อประสานงาน';
+            const actionType = window.normalizeCoordinationActionType(action.type || 'ติดต่อประสานงาน');
             const resultStatus = action.resultStatus || 'ดำเนินการแล้ว';
             const defaultOfficer = action.officer || document.getElementById('sCoordResponsible')?.value || '';
             const defaultRecipient = action.recipient || document.getElementById('sAgency')?.value || '';
@@ -1432,9 +1527,9 @@
                     <button type="button" onclick="window.removeCoordinationAction(this)" class="text-red-500 hover:text-red-700 text-xs font-bold"><i class="fa-solid fa-trash mr-1"></i>ลบ</button>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
-                    <div class="md:col-span-2"><label class="block text-[10px] font-bold text-gray-600 mb-1">วันที่ดำเนินการ</label><input type="date" class="coord-action-date w-full px-2 py-1.5 border border-gray-300 rounded bg-white" value="${window.escapeHtml(action.date || window.todayISO())}"></div>
+                    <div class="md:col-span-2"><label class="block text-[10px] font-bold text-gray-600 mb-1">วันที่ดำเนินการ</label><input type="date" onchange="window.syncCoordinationStatusFromAction()" class="coord-action-date w-full px-2 py-1.5 border border-gray-300 rounded bg-white" value="${window.escapeHtml(action.date || window.todayISO())}"></div>
                     <div class="md:col-span-4"><label class="block text-[10px] font-bold text-gray-600 mb-1">ขั้นตอน/การดำเนินการ</label><select onchange="window.syncCoordinationStatusFromAction(this)" class="coord-action-type w-full px-2 py-1.5 border border-gray-300 rounded bg-white">${typeOptions}</select></div>
-                    <div class="md:col-span-3"><label class="block text-[10px] font-bold text-gray-600 mb-1">ผลการดำเนินการ</label><select class="coord-action-result w-full px-2 py-1.5 border border-gray-300 rounded bg-white">${statusOptions}</select></div>
+                    <div class="md:col-span-3"><label class="block text-[10px] font-bold text-gray-600 mb-1">ผลการดำเนินการ</label><select onchange="window.syncCoordinationStatusFromAction()" class="coord-action-result w-full px-2 py-1.5 border border-gray-300 rounded bg-white">${statusOptions}</select></div>
                     <div class="md:col-span-3"><label class="block text-[10px] font-bold text-gray-600 mb-1">ผู้ดำเนินการ</label><input type="text" list="inspectorNameList" class="coord-action-officer w-full px-2 py-1.5 border border-gray-300 rounded bg-white" value="${window.escapeHtml(defaultOfficer)}" placeholder="ชื่อเจ้าหน้าที่"></div>
                     <div class="md:col-span-6"><label class="block text-[10px] font-bold text-gray-600 mb-1">รายละเอียด/ผลที่ดำเนินการ</label><textarea rows="2" class="coord-action-detail w-full px-2 py-1.5 border border-gray-300 rounded bg-white" placeholder="บันทึกรายละเอียดที่ดำเนินการและผลที่ได้รับ">${window.escapeHtml(action.detail || '')}</textarea></div>
                     <div class="md:col-span-3"><label class="block text-[10px] font-bold text-gray-600 mb-1">เลขหนังสือ/เอกสารอ้างอิง</label><input type="text" class="coord-action-document w-full px-2 py-1.5 border border-gray-300 rounded bg-white" value="${window.escapeHtml(action.documentNo || '')}" placeholder="ถ้ามี"></div>
@@ -1471,6 +1566,30 @@
         window.userRole = 'viewer'; 
         window.confirmActionCallback = null;
         window.projectWorkflow = ['เสนอความต้องการ','ประสานแผน','สำรวจ','ประมาณราคา','จัดสรรงบประมาณ','จัดซื้อจัดจ้าง','ทำสัญญา','ก่อสร้าง','ตรวจรับ','เบิกจ่าย','แล้วเสร็จ','ระยะประกัน'];
+        window.coordinationWorkflow = [
+            'รับเรื่องจาก รพ.สต.', 'ตรวจสอบข้อมูลและเอกสาร', 'ติดต่อประสานงาน', 'นัดหมายสำรวจ',
+            'สำรวจพื้นที่', 'จัดทำแบบรูปรายการ', 'จัดทำประมาณราคา', 'จัดส่งประมาณราคาให้ รพ.สต.',
+            'ส่งแผนงานให้กองยุทธศาสตร์', 'โครงการถูกคัดเลือกเข้าแผน', 'โครงการถูกคัดเลือกเป็นข้อบัญญัติ'
+        ];
+        window.legacyCoordinationStatusMap = {
+            'รับเรื่องแล้ว':'รับเรื่องจาก รพ.สต.',
+            'ตรวจสอบข้อมูลเบื้องต้น':'ตรวจสอบข้อมูลและเอกสาร',
+            'สำรวจพื้นที่แล้ว':'สำรวจพื้นที่',
+            'จัดทำแบบและประมาณราคา':'จัดทำประมาณราคา',
+            'ตรวจสอบแบบและราคา':'จัดทำประมาณราคา',
+            'เสนอผู้บังคับบัญชา':'จัดทำประมาณราคา',
+            'จัดเตรียมเอกสารส่งกลับ':'จัดส่งประมาณราคาให้ รพ.สต.',
+            'จัดทำหนังสือส่ง':'จัดส่งประมาณราคาให้ รพ.สต.',
+            'ส่งเอกสารให้ รพ.สต.':'จัดส่งประมาณราคาให้ รพ.สต.',
+            'ส่งเอกสารให้ รพ.สต. แล้ว':'จัดส่งประมาณราคาให้ รพ.สต.',
+            'รอข้อมูลเพิ่มเติมจาก รพ.สต.':'รับข้อมูลเพิ่มเติม',
+            'สิ้นสุดการประสานแผน':'ส่งแผนงานให้กองยุทธศาสตร์',
+            'ยกระดับเป็นโครงการข้อบัญญัติแล้ว':'โครงการถูกคัดเลือกเป็นข้อบัญญัติ'
+        };
+        window.normalizeCoordinationStatus = function(status) {
+            const raw = String(status || 'รับเรื่องจาก รพ.สต.');
+            return window.legacyCoordinationStatusMap[raw] || raw;
+        };
         window.legacyStageMap = {
             'จัดทำแบบรูปรายการก่อสร้าง': 'ประมาณราคา', 'จัดทำราคากลางในระบบ egp': 'ประมาณราคา',
             'ส่งอนุมัติราคากลาง': 'ประมาณราคา', 'ทบทวนราคากลาง': 'ประมาณราคา',
@@ -1478,6 +1597,76 @@
         };
 
         window.escapeHtml = function(value) { return String(value ?? '-').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); };
+        window.getProjectDisplayName = function(project, fallback = 'ไม่ระบุชื่อโครงการ') {
+            const candidates = [project?.name, project?.sNameNew, project?.sNameOld, project?.sDetails];
+            for (const candidate of candidates) {
+                const value = String(candidate ?? '').trim();
+                if (value && value !== '-' && value !== 'ไม่ระบุ') return value;
+            }
+            return fallback;
+        };
+        // V49: สิทธิการใช้ที่ดินเป็นข้อมูลหลักของ รพ.สต. ไม่ใช่ข้อมูลรายโครงการ
+        window.hospitalLandPermissionMeta = {
+            approved: {label:'ได้รับอนุญาตให้ใช้ที่ดินราชพัสดุแล้ว', readiness:'พร้อมเสนอและดำเนินโครงการก่อสร้าง', className:'bg-green-50 border-green-200 text-green-800', icon:'fa-circle-check', color:'#16a34a'},
+            not_approved: {label:'ยังไม่ได้รับอนุญาตให้ใช้ที่ดินราชพัสดุ', readiness:'ยังไม่สามารถดำเนินการก่อสร้างได้', className:'bg-red-50 border-red-200 text-red-800', icon:'fa-circle-xmark', color:'#dc2626'},
+            checking: {label:'อยู่ระหว่างตรวจสอบข้อมูล', readiness:'ยังไม่พร้อมยืนยันการดำเนินโครงการก่อสร้าง', className:'bg-amber-50 border-amber-200 text-amber-800', icon:'fa-clock', color:'#f59e0b'},
+            not_state_property: {label:'ไม่ใช่ที่ดินราชพัสดุ', readiness:'ไม่อยู่ภายใต้เงื่อนไขการอนุญาตใช้ที่ราชพัสดุ', className:'bg-slate-50 border-slate-300 text-slate-700', icon:'fa-circle-info', color:'#64748b'}
+        };
+        window.normalizeHospitalLandPermissionStatus = function(value) {
+            const raw = String(value || '').trim();
+            if (window.hospitalLandPermissionMeta[raw]) return raw;
+            const aliases = {
+                'ได้รับอนุญาตให้ใช้ที่ดินราชพัสดุแล้ว':'approved', 'ได้รับอนุญาตแล้ว':'approved',
+                'ยังไม่ได้รับอนุญาตให้ใช้ที่ดินราชพัสดุ':'not_approved', 'ยังไม่ได้รับอนุญาต':'not_approved',
+                'อยู่ระหว่างตรวจสอบข้อมูล':'checking', 'รอตรวจสอบ':'checking',
+                'ไม่ใช่ที่ดินราชพัสดุ':'not_state_property'
+            };
+            return aliases[raw] || '';
+        };
+        window.findHospitalRecord = function(name, district = '') {
+            const cleanName = String(name || '').trim();
+            const cleanDistrict = String(district || '').trim();
+            if (!cleanName) return null;
+            return (window.hospitalsData || []).find(h => String(h.name || '').trim() === cleanName && (!cleanDistrict || String(h.district || '').trim() === cleanDistrict)) || null;
+        };
+        window.getHospitalLandPermissionStatus = function(hospitalOrProject, district = '') {
+            let record = null;
+            if (typeof hospitalOrProject === 'string') record = window.findHospitalRecord(hospitalOrProject, district);
+            else if (hospitalOrProject?.hospital) record = window.findHospitalRecord(hospitalOrProject.hospital, hospitalOrProject.district);
+            else if (hospitalOrProject?.name) record = hospitalOrProject;
+            return window.normalizeHospitalLandPermissionStatus(record?.landUsePermissionStatus) || 'checking';
+        };
+        window.getHospitalLandPermissionMeta = function(hospitalOrStatus, district = '') {
+            const status = typeof hospitalOrStatus === 'string' && window.hospitalLandPermissionMeta[hospitalOrStatus]
+                ? hospitalOrStatus
+                : window.getHospitalLandPermissionStatus(hospitalOrStatus, district);
+            return {status, ...window.hospitalLandPermissionMeta[status]};
+        };
+        window.updateHospitalLandPermissionNotice = function() {
+            const select = document.getElementById('hospLandPermissionStatus');
+            const notice = document.getElementById('hospLandPermissionNotice');
+            if (!select || !notice) return;
+            const meta = window.getHospitalLandPermissionMeta(select.value);
+            notice.className = `mt-2 rounded-lg border px-3 py-2 text-xs font-bold ${meta.className}`;
+            notice.innerHTML = `<i class="fa-solid ${meta.icon} mr-1"></i>${meta.readiness}`;
+        };
+        window.getProjectCategory = function(project) {
+            const budgetType = String(project?.budgetType || '').trim();
+            if (budgetType === 'งานสำรวจและประมาณราคาเข้าแผน') {
+                return { key: 'coordination', label: 'โครงการประสานแผน', shortLabel: 'ประสานแผน' };
+            }
+            if (project?.sourceCoordinationId || budgetType.includes('ข้อบัญญัติ')) {
+                return { key: 'ordinance', label: 'โครงการตามข้อบัญญัติ', shortLabel: 'ข้อบัญญัติ' };
+            }
+            return { key: 'general', label: budgetType || 'โครงการทั่วไป', shortLabel: budgetType || 'ทั่วไป' };
+        };
+        window.getProjectMissingFields = function(project) {
+            const missing = [];
+            if (!window.getProjectDisplayName(project, '')) missing.push('ชื่อโครงการ');
+            if (!String(project?.hospital || '').trim()) missing.push('รพ.สต.');
+            if (!String(project?.year || project?.coordinationYear || '').trim()) missing.push('ปีงบประมาณ');
+            return missing;
+        };
         window.todayISO = function() { const d = new Date(); const off = d.getTimezoneOffset(); return new Date(d.getTime() - off * 60000).toISOString().slice(0,10); };
         window.formatThaiDate = function(value) {
             if (!value) return '-';
@@ -1490,8 +1679,46 @@
             if (raw.startsWith('ส่งมอบงานงวดที่')) return 'ก่อสร้าง';
             return window.legacyStageMap[raw] || (window.projectWorkflow.includes(raw) ? raw : 'เสนอความต้องการ');
         };
+        window.getProjectMainStage = function(project) {
+            if (project?.budgetType === 'งานสำรวจและประมาณราคาเข้าแผน') return 'ประสานแผน';
+            return window.normalizeProjectStage(project?.status);
+        };
+        window.getCoordinationWorkflowState = function(project) {
+            const status = window.normalizeCoordinationStatus(project?.coordinationStatus || (project?.sInspectDate ? 'สำรวจพื้นที่' : 'รับเรื่องจาก รพ.สต.'));
+            let index = window.coordinationWorkflow.indexOf(status);
+            const completed = (Array.isArray(project?.coordinationActions) ? project.coordinationActions : []).map((action, actionIndex) => ({...action, actionIndex}))
+                .map(action => ({...action, type: window.normalizeCoordinationActionType(action.type)}))
+                .filter(action => action.resultStatus === 'ดำเนินการแล้ว' && window.coordinationActionStatusMap[action.type])
+                .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')) || a.actionIndex - b.actionIndex);
+            if (index < 0 && status === 'รับข้อมูลเพิ่มเติม') {
+                index = 1;
+            } else if (index < 0 && completed.length) {
+                for (let i = completed.length - 1; i >= 0; i--) {
+                    const mappedIndex = window.coordinationWorkflow.indexOf(window.coordinationActionStatusMap[completed[i].type]);
+                    if (mappedIndex >= 0) { index = mappedIndex; break; }
+                }
+            }
+            if (index < 0) index = 0;
+            const matchingDates = completed
+                .filter(action => status === 'รับข้อมูลเพิ่มเติม'
+                    ? window.coordinationActionStatusMap[action.type] === status
+                    : window.coordinationWorkflow.indexOf(window.coordinationActionStatusMap[action.type]) === index)
+                .map(action => action.date)
+                .filter(Boolean);
+            return {
+                workflow: window.coordinationWorkflow,
+                stage: status,
+                stageIndex: index,
+                stageTotal: window.coordinationWorkflow.length,
+                stageStartDate: matchingDates[matchingDates.length - 1] || project?.stageStartDate || project?.lastUpdatedAt || ''
+            };
+        };
+        window.getProjectStageStartDate = function(project) {
+            if (project?.budgetType === 'งานสำรวจและประมาณราคาเข้าแผน') return window.getCoordinationWorkflowState(project).stageStartDate;
+            return project?.stageStartDate || project?.lastUpdatedAt || '';
+        };
         window.isProjectCompleted = function(project) {
-            if (project?.budgetType === 'งานสำรวจและประมาณราคาเข้าแผน' && ['สิ้นสุดการประสานแผน','ยกระดับเป็นโครงการข้อบัญญัติแล้ว'].includes(project?.coordinationStatus)) return true;
+            if (project?.budgetType === 'งานสำรวจและประมาณราคาเข้าแผน') return Boolean(project?.ordinanceProjectId);
             return ['แล้วเสร็จ','ระยะประกัน'].includes(window.normalizeProjectStage(project.status));
         };
         window.isArchivedCoordinationProject = function(project) {
@@ -1500,7 +1727,7 @@
         };
         window.getProjectDisplayBudgetFolder = function(project) {
             const isCoordination = project?.budgetType === 'งานสำรวจและประมาณราคาเข้าแผน';
-            if (isCoordination && project?.coordinationSelectionResult === 'ได้รับคัดเลือกเข้าสู่ข้อบัญญัติ' && !project?.ordinanceProjectId) return 'รอยกระดับเป็นข้อบัญญัติ';
+            if (isCoordination && project?.coordinationSelectionResult === 'ได้รับคัดเลือกเข้าสู่ข้อบัญญัติ' && !project?.ordinanceProjectId) return 'รอสร้างโครงการข้อบัญญัติ';
             if (isCoordination) return 'โครงการประสานแผน';
             return project?.budgetType || 'ไม่ระบุประเภทงบประมาณ';
         };
@@ -1515,16 +1742,26 @@
         };
         window.getProjectAlertState = function(project) {
             const staleDays = Math.max(1, Number(document.getElementById('alertStaleDays')?.value)||14); const dueSoonDays = Math.max(1, Number(document.getElementById('alertDueSoonDays')?.value)||7);
-            const today = new Date(window.todayISO()+'T00:00:00'); const stage = window.normalizeProjectStage(project.status); const reasons = []; let level = 'green'; const rank = {green:0,yellow:1,orange:2,red:3};
+            const today = new Date(window.todayISO()+'T00:00:00');
+            const isCoordination = project?.budgetType === 'งานสำรวจและประมาณราคาเข้าแผน';
+            const workflowState = isCoordination
+                ? window.getCoordinationWorkflowState(project)
+                : {workflow:window.projectWorkflow, stage:window.getProjectMainStage(project), stageIndex:Math.max(0, window.projectWorkflow.indexOf(window.getProjectMainStage(project))), stageTotal:window.projectWorkflow.length, stageStartDate:window.getProjectStageStartDate(project)};
+            const stage = workflowState.stage; const stageStartDate = workflowState.stageStartDate; const reasons = []; let level = 'green'; const rank = {green:0,yellow:1,orange:2,red:3};
             const add = (severity, text) => { reasons.push(text); if (rank[severity] > rank[level]) level = severity; };
             const checkDue = (value, label) => { if (!value || window.isProjectCompleted(project)) return; const d = new Date(String(value).slice(0,10)+'T00:00:00'); if (Number.isNaN(d.getTime())) return; const left = Math.ceil((d-today)/86400000); if (left < 0) add('red', `${label}เกินกำหนด ${Math.abs(left)} วัน`); else if (left <= dueSoonDays) add('orange', `${label}จะครบกำหนดใน ${left} วัน`); };
-            checkDue(project.stageDueDate, 'ขั้นตอนนี้'); checkDue(project.contractEndDate, 'สัญญา');
+            checkDue(project.contractEndDate, 'สัญญา');
             const progress = window.getProgressSnapshot(project); if (stage === 'ก่อสร้าง' && progress.lag >= 10) add('red', `ผลงานต่ำกว่าแผน ${progress.lag.toFixed(1)}%`); else if (stage === 'ก่อสร้าง' && progress.lag >= 5) add('orange', `ผลงานต่ำกว่าแผน ${progress.lag.toFixed(1)}%`);
-            if (project.documentsStatus === 'incomplete') add('orange', 'เอกสารสำคัญยังไม่ครบ');
+            if (isCoordination && project.documentsStatus === 'incomplete') add('orange', 'เอกสารสำคัญยังไม่ครบ');
+            if (project.hospital) {
+                const landPermission = window.getHospitalLandPermissionMeta(project);
+                if (landPermission.status === 'not_approved') add('red', 'ยังไม่ได้รับอนุญาตให้ใช้ที่ดินราชพัสดุ จึงยังไม่สามารถดำเนินการก่อสร้างได้');
+                else if (landPermission.status === 'checking') add('orange', 'อยู่ระหว่างตรวจสอบสถานะการอนุญาตให้ใช้ที่ดินราชพัสดุ');
+            }
             const lastDate = project.lastUpdatedAt || project.stageStartDate; const stale = window.daysBetween(lastDate, today); if (!window.isProjectCompleted(project) && lastDate && stale > staleDays) add('yellow', `ไม่มีการอัปเดต ${stale} วัน`);
-            if (!project.currentResponsible && !window.isProjectCompleted(project)) add('yellow', 'ยังไม่ระบุผู้รับผิดชอบ');
+            if (!(project.currentResponsible || project.coordinationResponsible) && !window.isProjectCompleted(project)) add('yellow', 'ยังไม่ระบุผู้รับผิดชอบ');
             if (!reasons.length) reasons.push(window.isProjectCompleted(project) ? 'โครงการดำเนินการครบขั้นตอน' : 'ยังไม่พบเงื่อนไขที่ต้องเร่งรัด');
-            return {level, reasons, stage, daysInStage: window.daysBetween(project.stageStartDate || project.lastUpdatedAt, today), progress};
+            return {level, reasons, stage, stageIndex:workflowState.stageIndex, stageTotal:workflowState.stageTotal, workflow:workflowState.workflow, stageStartDate, daysInStage: window.daysBetween(stageStartDate, today), progress};
         };
 
         // V34: หน้าต่างอ่านอย่างเดียวสำหรับดูสถานะและประวัติโดยไม่ต้องเข้าโหมดแก้ไข
@@ -1543,7 +1780,8 @@
             const body = document.getElementById('projectStatusModalBody');
             const isCoordination = project.budgetType === 'งานสำรวจและประมาณราคาเข้าแผน';
             const state = window.getProjectAlertState(project);
-            const stageIndex = Math.max(0, window.projectWorkflow.indexOf(state.stage));
+            const activeWorkflow = state.workflow || (isCoordination ? window.coordinationWorkflow : window.projectWorkflow);
+            const stageIndex = Math.max(0, Number(state.stageIndex) || 0);
             const severity = {
                 red: {label:'เร่งรัดทันที', badge:'bg-red-600 text-white', panel:'bg-red-50 border-red-200 text-red-800', icon:'fa-circle-exclamation'},
                 orange: {label:'เฝ้าระวัง', badge:'bg-orange-500 text-white', panel:'bg-orange-50 border-orange-200 text-orange-800', icon:'fa-triangle-exclamation'},
@@ -1552,17 +1790,18 @@
             }[state.level];
             const documentsLabel = {complete:'เอกสารครบ', incomplete:'เอกสารยังไม่ครบ', not_required:'ยังไม่ถึงขั้นใช้เอกสาร'}[project.documentsStatus] || '-';
             const responsible = isCoordination ? (project.coordinationResponsible || project.currentResponsible) : project.currentResponsible;
-            const dueDate = isCoordination ? (project.coordinationNextDueDate || project.stageDueDate) : project.stageDueDate;
+            const responsiblePosition = isCoordination ? (project.coordinationResponsiblePosition || project.currentResponsiblePosition) : project.currentResponsiblePosition;
             const nextAction = isCoordination ? (project.coordinationNextAction || project.nextAction) : project.nextAction;
             const updateDate = project.lastUpdatedAt ? new Date(project.lastUpdatedAt) : null;
             const updateText = updateDate && !Number.isNaN(updateDate.getTime())
                 ? updateDate.toLocaleString('th-TH', {dateStyle:'medium', timeStyle:'short'})
                 : '-';
 
-            document.getElementById('statusDialogProjectName').textContent = project.name || project.sNameOld || 'ไม่ระบุชื่อโครงการ';
+            const statusProjectName = window.getProjectDisplayName(project);
+            document.getElementById('statusDialogProjectName').textContent = statusProjectName;
             document.getElementById('statusDialogProjectMeta').textContent = `${project.hospital || 'ไม่ระบุ รพ.สต.'} · อ.${project.district || '-'} · ปี ${project.year || project.coordinationYear || '-'}`;
 
-            const workflowHtml = window.projectWorkflow.map((stage, index) => {
+            const workflowHtml = activeWorkflow.map((stage, index) => {
                 const complete = index < stageIndex;
                 const current = index === stageIndex;
                 const color = complete ? 'border-green-500 bg-green-50 text-green-800' : (current ? 'border-blue-600 bg-blue-50 text-blue-900 ring-2 ring-blue-200' : 'border-gray-200 bg-white text-gray-400');
@@ -1575,28 +1814,34 @@
             }).join('');
 
             let detailedStatusHtml = '';
+            let landPermissionHtml = '';
+            if (project.hospital) {
+                const landPermission = window.getHospitalLandPermissionMeta(project);
+                landPermissionHtml = `<div class="mt-3 ${landPermission.className} border rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
+                    <div><div class="text-[10px] font-bold opacity-70">สิทธิการใช้ที่ดินราชพัสดุ</div><div class="font-bold mt-1"><i class="fa-solid ${landPermission.icon} mr-2"></i>${window.escapeHtml(landPermission.label)}</div></div>
+                    <div class="text-xs font-bold">${window.escapeHtml(landPermission.readiness)}</div>
+                </div>`;
+            }
             if (isCoordination) {
                 const selectionResult = project.coordinationSelectionResult || 'อยู่ระหว่างพิจารณา';
                 const linkedProject = project.ordinanceProjectId ? window.projects.find(p => String(p.id) === String(project.ordinanceProjectId)) : null;
+                const selectionResultDisplay = selectionResult === 'ได้รับคัดเลือกเข้าสู่ข้อบัญญัติ' ? 'โครงการถูกคัดเลือกเป็นข้อบัญญัติ' : selectionResult;
                 const selectionClass = selectionResult === 'ได้รับคัดเลือกเข้าสู่ข้อบัญญัติ' ? 'bg-green-50 border-green-200 text-green-800' : (selectionResult === 'ไม่ได้รับการคัดเลือก' ? 'bg-red-50 border-red-200 text-red-800' : 'bg-amber-50 border-amber-200 text-amber-800');
                 detailedStatusHtml = `<div class="mt-4 bg-indigo-50 border border-indigo-200 rounded-xl p-4">
-                    <div class="text-[10px] font-bold text-indigo-500 uppercase">ขั้นตอนย่อยของงานประสานแผน</div>
-                    <div class="flex flex-wrap items-center justify-between gap-3 mt-1">
-                        <div class="text-lg font-bold text-indigo-900"><i class="fa-solid fa-arrows-rotate mr-2"></i>${window.escapeHtml(project.coordinationStatus || 'รับเรื่องแล้ว')}</div>
-                        <span class="text-xs font-bold px-3 py-1 rounded-full border ${project.coordinationPriority === 'เร่งด่วนมาก' ? 'bg-red-100 text-red-700 border-red-200' : project.coordinationPriority === 'เร่งด่วน' ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-white text-blue-700 border-blue-200'}">${window.escapeHtml(project.coordinationPriority || 'ปกติ')}</span>
-                    </div>
+                    <div class="text-[10px] font-bold text-indigo-500 uppercase">สถานะงานประสานแผนตามผัง 11 ขั้น</div>
+                    <div class="text-lg font-bold text-indigo-900 mt-1"><i class="fa-solid fa-arrows-rotate mr-2"></i>${window.escapeHtml(state.stage)}</div>
                 </div>
                 <div class="mt-3 ${selectionClass} border rounded-xl p-4">
-                    <div class="text-[10px] font-bold opacity-70">ผลการพิจารณาเข้าสู่ข้อบัญญัติ</div>
+                    <div class="text-[10px] font-bold opacity-70">ผลการพิจารณาเป็นข้อบัญญัติ</div>
                     <div class="flex flex-wrap justify-between items-center gap-3 mt-1">
-                        <div><div class="font-bold">${window.escapeHtml(selectionResult)}</div><div class="text-xs mt-1">วันที่พิจารณา ${window.formatThaiDate(project.coordinationSelectionDate)}${project.coordinationSelectionNote ? ` · ${window.escapeHtml(project.coordinationSelectionNote)}` : ''}</div></div>
-                        ${project.ordinanceProjectId ? `<button type="button" onclick="window.openProjectStatusModal('${window.escapeHtml(project.ordinanceProjectId)}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-xs font-bold"><i class="fa-solid fa-link mr-1"></i> เปิดโครงการข้อบัญญัติ${linkedProject ? `: ${window.escapeHtml(linkedProject.name || '')}` : ''}</button>` : (selectionResult === 'ได้รับคัดเลือกเข้าสู่ข้อบัญญัติ' ? `<button type="button" onclick="window.closeProjectStatusModal();window.openPromoteCoordinationModal('${window.escapeHtml(project.id)}')" class="admin-only bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-xs font-bold"><i class="fa-solid fa-arrow-up-right-dots mr-1"></i> ยกระดับเป็นโครงการข้อบัญญัติ</button>` : '')}
+                        <div><div class="font-bold">${window.escapeHtml(selectionResultDisplay)}</div><div class="text-xs mt-1">วันที่พิจารณา ${window.formatThaiDate(project.coordinationSelectionDate)}${project.coordinationSelectionNote ? ` · ${window.escapeHtml(project.coordinationSelectionNote)}` : ''}</div></div>
+                        ${project.ordinanceProjectId ? `<button type="button" onclick="window.openProjectStatusModal('${window.escapeHtml(project.ordinanceProjectId)}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-xs font-bold"><i class="fa-solid fa-link mr-1"></i> เปิดโครงการข้อบัญญัติ${linkedProject ? `: ${window.escapeHtml(window.getProjectDisplayName(linkedProject, ''))}` : ''}</button>` : (selectionResult === 'ได้รับคัดเลือกเข้าสู่ข้อบัญญัติ' ? `<button type="button" onclick="window.closeProjectStatusModal();window.openPromoteCoordinationModal('${window.escapeHtml(project.id)}')" class="admin-only bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-xs font-bold"><i class="fa-solid fa-arrow-up-right-dots mr-1"></i> สร้างโครงการข้อบัญญัติ</button>` : '')}
                     </div>
                 </div>`;
             }
             const sourceCoordination = project.sourceCoordinationId ? window.projects.find(p => String(p.id) === String(project.sourceCoordinationId)) : null;
             const sourceLinkHtml = project.sourceCoordinationId ? `<div class="mt-3 bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex flex-wrap justify-between items-center gap-3">
-                <div><div class="text-[10px] font-bold text-emerald-600">ที่มาของโครงการ</div><div class="font-bold text-emerald-900">ยกระดับจากโครงการประสานแผน</div><div class="text-xs text-emerald-700 mt-1">${window.escapeHtml(project.sourceCoordinationName || sourceCoordination?.name || '-')} · ปี ${window.escapeHtml(project.sourceCoordinationYear || '-')}</div></div>
+                <div><div class="text-[10px] font-bold text-emerald-600">ที่มาของโครงการ</div><div class="font-bold text-emerald-900">ยกระดับจากโครงการประสานแผน</div><div class="text-xs text-emerald-700 mt-1">${window.escapeHtml(project.sourceCoordinationName || window.getProjectDisplayName(sourceCoordination, '-'))} · ปี ${window.escapeHtml(project.sourceCoordinationYear || '-')}</div></div>
                 <button type="button" onclick="window.openProjectStatusModal('${window.escapeHtml(project.sourceCoordinationId)}')" class="bg-white border border-emerald-300 text-emerald-700 px-3 py-2 rounded-lg text-xs font-bold hover:bg-emerald-100"><i class="fa-solid fa-clock-rotate-left mr-1"></i> ดูประวัติต้นทาง</button>
             </div>` : '';
 
@@ -1606,7 +1851,7 @@
                 historyHtml = actions.length ? actions.map(action => `<div class="relative pl-7 pb-5 last:pb-0">
                     <span class="absolute left-0 top-1 w-3 h-3 rounded-full bg-indigo-600 ring-4 ring-indigo-100"></span>
                     <span class="absolute left-[5px] top-4 bottom-0 w-px bg-indigo-200 last:hidden"></span>
-                    <div class="flex flex-wrap justify-between gap-2"><b class="text-sm text-gray-800">${window.escapeHtml(action.type || 'ดำเนินการ')}</b><span class="text-xs text-gray-500">${window.formatThaiDate(action.date)}</span></div>
+                    <div class="flex flex-wrap justify-between gap-2"><b class="text-sm text-gray-800">${window.escapeHtml(window.normalizeCoordinationActionType(action.type || 'ดำเนินการ'))}</b><span class="text-xs text-gray-500">${window.formatThaiDate(action.date)}</span></div>
                     <div class="text-xs text-gray-600 mt-1">${window.escapeHtml(action.detail || '-')}</div>
                     <div class="text-[10px] text-gray-500 mt-1">ผู้ดำเนินการ: ${window.escapeHtml(action.officer || '-')} · ผล: ${window.escapeHtml(action.resultStatus || '-')}</div>
                 </div>`).join('') : '<div class="text-center text-sm text-gray-400 py-6 border border-dashed rounded-lg">ยังไม่มีประวัติการดำเนินการ</div>';
@@ -1621,22 +1866,27 @@
 
             body.innerHTML = `
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-                    <div><div class="text-xs text-gray-500 font-bold">ขั้นตอนหลักปัจจุบัน</div><div class="text-xl font-bold text-blue-900">ขั้นที่ ${stageIndex + 1} จาก 12 — ${window.escapeHtml(state.stage)}</div></div>
+                    <div><div class="text-xs text-gray-500 font-bold">${isCoordination ? 'ขั้นตอนงานประสานแผนปัจจุบัน' : 'ขั้นตอนโครงการก่อสร้างปัจจุบัน'}</div><div class="text-xl font-bold text-blue-900">ขั้นที่ ${stageIndex + 1} จาก ${activeWorkflow.length} — ${window.escapeHtml(state.stage)}</div></div>
                     <span class="${severity.badge} px-3 py-2 rounded-full text-xs font-bold shadow-sm"><i class="fa-solid ${severity.icon} mr-1"></i>${severity.label}</span>
                 </div>
                 <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">${workflowHtml}</div>
                 ${detailedStatusHtml}
+                ${landPermissionHtml}
                 ${sourceLinkHtml}
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mt-5">
-                    <div class="bg-white border rounded-xl p-3"><div class="text-[10px] font-bold text-gray-500">ผู้รับผิดชอบปัจจุบัน</div><div class="font-bold text-gray-800 mt-1">${window.escapeHtml(responsible || 'ยังไม่ระบุ')}</div></div>
-                    <div class="bg-white border rounded-xl p-3"><div class="text-[10px] font-bold text-gray-500">วันที่เริ่มขั้นตอน</div><div class="font-bold text-gray-800 mt-1">${window.formatThaiDate(project.stageStartDate)}</div></div>
-                    <div class="bg-white border rounded-xl p-3"><div class="text-[10px] font-bold text-gray-500">กำหนดติดตาม/แล้วเสร็จ</div><div class="font-bold text-gray-800 mt-1">${window.formatThaiDate(dueDate)}</div></div>
+                ${isCoordination ? `<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-5">
+                    <div class="bg-white border rounded-xl p-3"><div class="text-[10px] font-bold text-gray-500">ผู้รับผิดชอบปัจจุบัน</div><div class="font-bold text-gray-800 mt-1">${window.escapeHtml(responsible || 'ยังไม่ระบุ')}</div>${responsiblePosition ? `<div class="text-xs text-gray-500 mt-1">${window.escapeHtml(responsiblePosition)}</div>` : ''}</div>
+                    <div class="bg-white border rounded-xl p-3"><div class="text-[10px] font-bold text-gray-500">วันที่เริ่มขั้นตอน</div><div class="font-bold text-gray-800 mt-1">${window.formatThaiDate(state.stageStartDate)}</div></div>
                     <div class="bg-white border rounded-xl p-3"><div class="text-[10px] font-bold text-gray-500">อัปเดตล่าสุด</div><div class="font-bold text-gray-800 mt-1">${window.escapeHtml(updateText)}</div></div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
-                    <div class="md:col-span-2 bg-white border rounded-xl p-4"><div class="text-xs font-bold text-gray-500">สิ่งที่ต้องดำเนินการต่อ</div><div class="font-bold text-blue-900 mt-1">${window.escapeHtml(nextAction || 'ยังไม่ระบุ')}</div></div>
+                    <div class="md:col-span-2 bg-white border rounded-xl p-4"><div class="text-xs font-bold text-gray-500">หมายเหตุ</div><div class="font-bold text-blue-900 mt-1">${window.escapeHtml(project.coordinationNote || nextAction || 'ยังไม่ระบุ')}</div></div>
                     <div class="bg-white border rounded-xl p-4"><div class="text-xs font-bold text-gray-500">ความครบถ้วนของเอกสาร</div><div class="font-bold text-gray-800 mt-1">${window.escapeHtml(documentsLabel)}</div></div>
+                </div>` : `<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-5">
+                    <div class="bg-white border rounded-xl p-3"><div class="text-[10px] font-bold text-gray-500">ผู้รับผิดชอบปัจจุบัน</div><div class="font-bold text-gray-800 mt-1">${window.escapeHtml(responsible || 'ยังไม่ระบุ')}</div></div>
+                    <div class="bg-white border rounded-xl p-3"><div class="text-[10px] font-bold text-gray-500">ตำแหน่ง</div><div class="font-bold text-gray-800 mt-1">${window.escapeHtml(responsiblePosition || 'ยังไม่ระบุ')}</div></div>
+                    <div class="bg-white border rounded-xl p-3"><div class="text-[10px] font-bold text-gray-500">อัปเดตล่าสุด</div><div class="font-bold text-gray-800 mt-1">${window.escapeHtml(updateText)}</div></div>
                 </div>
+                <div class="bg-white border rounded-xl p-4 mt-3"><div class="text-xs font-bold text-gray-500">หมายเหตุ</div><div class="font-bold text-blue-900 mt-1">${window.escapeHtml(nextAction || project.note || 'ยังไม่ระบุ')}</div></div>`}
                 <div class="${severity.panel} border rounded-xl p-4 mt-3"><div class="text-xs font-bold mb-1">ผลการตรวจติดตามอัตโนมัติ</div><ul class="list-disc ml-5 text-sm space-y-1">${state.reasons.map(reason => `<li>${window.escapeHtml(reason)}</li>`).join('')}</ul></div>
                 <div class="bg-white border rounded-xl p-4 mt-4"><h3 class="font-bold text-gray-800 mb-4"><i class="fa-solid fa-clock-rotate-left text-indigo-600 mr-2"></i>${isCoordination ? 'ประวัติการดำเนินงานประสานแผน' : 'ประวัติการเปลี่ยนขั้นตอน'}</h3>${historyHtml}</div>`;
 
@@ -1674,7 +1924,7 @@
             completed.classList.toggle('flex', Boolean(linkedId));
             if (linkedId) {
                 const linked = window.projects.find(p => String(p.id) === String(linkedId));
-                document.getElementById('coordPromotionCompletedMeta').textContent = linked ? `${linked.name || '-'} · ปี ${linked.year || '-'}` : `รหัสโครงการ ${linkedId}`;
+                document.getElementById('coordPromotionCompletedMeta').textContent = linked ? `${window.getProjectDisplayName(linked, '-')} · ปี ${linked.year || '-'}` : `รหัสโครงการ ${linkedId}`;
             }
 
             const savedSource = window.projects.find(p => String(p.id) === String(window.editingProjectId));
@@ -1682,7 +1932,7 @@
             button.disabled = !window.editingProjectId || !savedAsSelected || Boolean(linkedId);
             button.classList.toggle('opacity-50', button.disabled);
             button.classList.toggle('cursor-not-allowed', button.disabled);
-            button.title = button.disabled && !linkedId ? 'กรุณาบันทึกผลการพิจารณาก่อนยกระดับโครงการ' : '';
+            button.title = button.disabled && !linkedId ? 'กรุณาบันทึกขั้นที่ 11 ก่อนสร้างโครงการข้อบัญญัติ' : '';
             if (selected && !document.getElementById('sCoordSelectionDate').value) document.getElementById('sCoordSelectionDate').value = window.todayISO();
         };
 
@@ -1710,13 +1960,13 @@
         };
 
         window.openPromoteCoordinationModal = function(projectId) {
-            if (window.userRole !== 'admin') { window.showAlert('เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถยกระดับโครงการได้'); return; }
+            if (window.userRole !== 'admin') { window.showAlert('เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถสร้างโครงการข้อบัญญัติได้'); return; }
             const source = window.projects.find(p => String(p.id) === String(projectId));
             if (!source || source.budgetType !== 'งานสำรวจและประมาณราคาเข้าแผน') { window.showAlert('ไม่พบโครงการประสานแผนต้นทาง'); return; }
             const existingLink = source.ordinanceProjectId || window.projects.find(p => String(p.sourceCoordinationId) === String(source.id))?.id;
             if (existingLink) { window.closeModal(); window.openProjectStatusModal(existingLink); return; }
             if (source.coordinationSelectionResult !== 'ได้รับคัดเลือกเข้าสู่ข้อบัญญัติ') {
-                window.showAlert('กรุณาเลือกผลการพิจารณา “ได้รับคัดเลือกเข้าสู่ข้อบัญญัติ” และบันทึกข้อมูลก่อน');
+                window.showAlert('กรุณากำหนดขั้นที่ 11 “โครงการถูกคัดเลือกเป็นข้อบัญญัติ” และบันทึกข้อมูลก่อน');
                 return;
             }
 
@@ -1746,13 +1996,13 @@
             const source = window.projects.find(p => String(p.id) === String(sourceId));
             if (!source) { window.showAlert('ไม่พบโครงการประสานแผนต้นทาง'); return; }
             const duplicate = source.ordinanceProjectId || window.projects.find(p => String(p.sourceCoordinationId) === String(sourceId));
-            if (duplicate) { window.showAlert('โครงการประสานแผนนี้ถูกยกระดับเป็นโครงการข้อบัญญัติแล้ว ไม่สามารถสร้างซ้ำได้'); return; }
-            if (!window.promoteCoordinationInCloud) { window.showAlert('ระบบยกระดับโครงการยังเชื่อมต่อฐานข้อมูลไม่พร้อม กรุณารอสักครู่แล้วลองใหม่'); return; }
+            if (duplicate) { window.showAlert('โครงการประสานแผนนี้ถูกสร้างเป็นโครงการข้อบัญญัติแล้ว ไม่สามารถสร้างซ้ำได้'); return; }
+            if (!window.promoteCoordinationInCloud) { window.showAlert('ระบบสร้างโครงการข้อบัญญัติยังเชื่อมต่อฐานข้อมูลไม่พร้อม กรุณารอสักครู่แล้วลองใหม่'); return; }
 
             const year = document.getElementById('promoteYear').value.trim();
             const name = document.getElementById('promoteProjectName').value.trim();
             const promotionDate = document.getElementById('promoteDate').value;
-            if (!/^[0-9]{4}$/.test(year) || !name || !promotionDate) { window.showAlert('กรุณากรอกชื่อโครงการ ปีงบประมาณ 4 หลัก และวันที่ยกระดับให้ครบถ้วน'); return; }
+            if (!/^[0-9]{4}$/.test(year) || !name || !promotionDate) { window.showAlert('กรุณากรอกชื่อโครงการ ปีงบประมาณ 4 หลัก และวันที่สร้างโครงการข้อบัญญัติให้ครบถ้วน'); return; }
 
             const button = document.getElementById('btnConfirmPromotion');
             const oldButtonHtml = button.innerHTML;
@@ -1773,6 +2023,7 @@
                 medianPrice: 0, contractPrice: 0, contractNo: '', contractor: '', contractStartDate: '', contractEndDate: '',
                 status: 'จัดสรรงบประมาณ',
                 currentResponsible: document.getElementById('promoteResponsible').value.trim(),
+                currentResponsiblePosition: source.coordinationResponsiblePosition || source.currentResponsiblePosition || '',
                 stageStartDate: promotionDate,
                 stageDueDate: '',
                 documentsStatus: document.getElementById('promoteDocumentsStatus').value,
@@ -1797,7 +2048,9 @@
                     coordinationSelectionResult: 'ได้รับคัดเลือกเข้าสู่ข้อบัญญัติ',
                     coordinationSelectionDate: source.coordinationSelectionDate || promotionDate,
                     coordinationSelectionNote: source.coordinationSelectionNote || document.getElementById('promoteNote').value.trim(),
-                    coordinationStatus: 'ยกระดับเป็นโครงการข้อบัญญัติแล้ว',
+                    coordinationStatus: 'โครงการถูกคัดเลือกเป็นข้อบัญญัติ',
+                    status: 'ประสานแผน',
+                    stageStartDate: window.getProjectStageStartDate(source) || source.stageStartDate || promotionDate,
                     ordinanceProjectId: newId,
                     ordinanceProjectName: name,
                     ordinancePromotedAt: now,
@@ -1821,10 +2074,10 @@
                 window.renderMarkers();
                 window.refreshOperationalViews();
                 if (!document.getElementById('searchModal').classList.contains('hidden')) window.openSearchModal();
-                window.showAlert(`ยกระดับโครงการสำเร็จ\nสร้างโครงการข้อบัญญัติ “${name}”\nเริ่มต้นที่ขั้นที่ 5 — จัดสรรงบประมาณ`);
+                window.showAlert(`สร้างโครงการข้อบัญญัติสำเร็จ\nโครงการ “${name}”\nเริ่มต้นที่ขั้นที่ 5 — จัดสรรงบประมาณ`);
             } catch (error) {
                 console.error('Promotion Error:', error);
-                window.showAlert(`ยกระดับโครงการไม่สำเร็จ\n${error.message || 'กรุณาลองใหม่อีกครั้ง'}`);
+                window.showAlert(`สร้างโครงการข้อบัญญัติไม่สำเร็จ\n${error.message || 'กรุณาลองใหม่อีกครั้ง'}`);
             } finally {
                 button.disabled = false;
                 button.innerHTML = oldButtonHtml;
@@ -1924,7 +2177,7 @@
 
             const projectName = document.createElement('div');
             projectName.className = 'font-bold text-gray-900 text-sm mt-1 break-words';
-            projectName.textContent = project?.name || 'ไม่ระบุชื่อโครงการ';
+            projectName.textContent = window.getProjectDisplayName(project);
 
             const details = document.createElement('div');
             details.className = 'text-xs text-gray-500 mt-1';
@@ -2108,11 +2361,12 @@
                 if (window.drawModeTarget === 'hospital') {
                     window.tempPoints = [[e.latlng.lat, e.latlng.lng]];
                     if (window.tempDrawLayer) window.map.removeLayer(window.tempDrawLayer);
+                    const selectedLandPermission = window.getHospitalLandPermissionMeta(document.getElementById('hospLandPermissionStatus')?.value || 'checking');
                     
                     const hospitalIcon = L.divIcon({
                         className: 'custom-hospital-marker',
-                        html: `<div class="w-8 h-8 bg-white rounded-full border-[3px] border-rose-500 flex items-center justify-center shadow-lg relative opacity-70">
-                                <i class="fa-solid fa-house-medical text-rose-500 text-[14px]"></i>
+                        html: `<div class="w-8 h-8 bg-white rounded-full border-[3px] flex items-center justify-center shadow-lg relative opacity-70" style="border-color:${selectedLandPermission.color};">
+                                <i class="fa-solid fa-house-medical text-[14px]" style="color:${selectedLandPermission.color};"></i>
                                </div>`,
                         iconSize: [32, 32], iconAnchor: [16, 16]
                     });
@@ -2260,7 +2514,7 @@
 
                     locationGroups[groupKey] = {
                         isHospital: isHospitalProj,
-                        title: isHospitalProj ? p.hospital.trim() : p.name,
+                        title: isHospitalProj ? p.hospital.trim() : window.getProjectDisplayName(p),
                         district: p.district,
                         coords: projCenterCoord,
                         geomType: p.geomType, 
@@ -2280,11 +2534,16 @@
 
             Object.values(locationGroups).forEach(group => {
                 if(!group.coords) return; 
+                const hospitalLandPermission = group.isHospital ? window.getHospitalLandPermissionMeta(group.title, group.district) : null;
 
                 let popupHtml = `<div class="font-sans max-h-[650px] overflow-y-auto custom-scrollbar pr-2 pb-1" style="width:min(540px, calc(100vw - 80px));">`;
                 
                 if (group.isHospital) {
-                    popupHtml += `<b class="text-red-700 text-[15px] border-b-2 border-red-500 pb-1.5 block mb-3 font-bold"><i class="fa-solid fa-hospital-user mr-1"></i> ${group.title}</b>`;
+                    popupHtml += `<b class="text-[15px] border-b-2 pb-1.5 block mb-2 font-bold" style="color:${hospitalLandPermission.color};border-color:${hospitalLandPermission.color};"><i class="fa-solid fa-hospital-user mr-1"></i> ${escapePopupHtml(group.title)}</b>
+                        <div class="${hospitalLandPermission.className} border rounded-lg p-2.5 mb-3 text-[11px]">
+                            <div class="font-bold"><i class="fa-solid ${hospitalLandPermission.icon} mr-1"></i>${escapePopupHtml(hospitalLandPermission.label)}</div>
+                            <div class="mt-1 text-[10px]">${escapePopupHtml(hospitalLandPermission.readiness)}</div>
+                        </div>`;
                 } else {
                     popupHtml += `<b class="text-blue-800 text-[15px] border-b-2 border-blue-500 pb-1.5 block mb-3 font-bold line-clamp-2"><i class="fa-solid fa-building mr-1"></i> ${group.title}</b>`;
                 }
@@ -2336,16 +2595,13 @@
                         `;
                         
                         folderProjects.forEach(p => {
-                            const rawProjectName = (p.name && String(p.name).trim() !== '-' && String(p.name).trim() !== '')
-                                ? p.name
-                                : (p.sNameNew || p.sNameOld || p.sDetails || 'ไม่ระบุชื่อโครงการ');
+                            const rawProjectName = window.getProjectDisplayName(p);
                             const displayProjectName = escapePopupHtml(rawProjectName);
                             const isSurveyProject = p.budgetType === 'งานสำรวจและประมาณราคาเข้าแผน';
 
                             if (isSurveyProject) {
                                 const coordinationActions = Array.isArray(p.coordinationActions) ? p.coordinationActions : [];
                                 const latestCoordinationAction = [...coordinationActions].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))[0];
-                                const priorityClass = p.coordinationPriority === 'เร่งด่วนมาก' ? 'bg-red-100 text-red-700 border-red-200' : (p.coordinationPriority === 'เร่งด่วน' ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-blue-100 text-blue-700 border-blue-200');
                                 let surveyAdminBtns = '';
                                 if (window.userRole === 'admin') {
                                     surveyAdminBtns = `
@@ -2359,15 +2615,15 @@
                                         <div class="font-bold text-gray-800 text-xs mb-1 leading-tight break-words" title="${displayProjectName}"><i class="fa-solid fa-diagram-project text-blue-600 mr-1"></i>${displayProjectName}</div>
                                         <div class="grid grid-cols-2 gap-1 text-[10px] bg-gray-50 p-1.5 rounded border border-gray-100 mb-1">
                                             <div class="text-gray-500">ประเภท: <span class="font-bold text-gray-700">${escapePopupHtml(p.workType || '-')}</span></div>
-                                            <div class="text-gray-500">สถานะ: <span class="${String(p.status || '').includes('แล้วเสร็จ') ? 'text-green-600' : 'text-orange-500'} font-bold">${escapePopupHtml(p.status || '-')}</span></div>
+                                            <div class="text-gray-500">กระบวนงาน: <span class="text-indigo-700 font-bold">ประสานแผน</span></div>
                                             <div class="text-gray-500">งบ: <span class="font-bold text-blue-600">฿${formatPopupMoney(p.budget)}</span></div>
                                             <div class="text-gray-500">สัญญา: <span class="font-bold text-green-600">฿${formatPopupMoney(p.contractPrice)}</span></div>
                                         </div>
                                         <div class="bg-indigo-50 border border-indigo-100 rounded p-2 mb-1.5 text-[10px] space-y-1">
-                                            <div class="flex justify-between gap-2"><span class="text-indigo-500">ขั้นตอนปัจจุบัน</span><span class="font-bold text-indigo-800 text-right">${escapePopupHtml(p.coordinationStatus || 'รับเรื่องแล้ว')}</span></div>
-                                            <div class="flex justify-between gap-2"><span class="text-indigo-500">ผู้รับผิดชอบ</span><span class="font-bold text-gray-700 text-right">${escapePopupHtml(p.coordinationResponsible || p.currentResponsible || '-')}</span></div>
-                                            <div class="flex justify-between gap-2"><span class="text-indigo-500">ติดตามครั้งถัดไป</span><span class="font-bold text-gray-700">${formatPopupDate(p.coordinationNextDueDate || p.stageDueDate)}</span></div>
-                                            <div class="pt-1 border-t border-indigo-100 flex justify-between items-center gap-2"><span class="${priorityClass} border px-2 py-0.5 rounded-full font-bold">${escapePopupHtml(p.coordinationPriority || 'ปกติ')}</span><span class="text-gray-500">ประวัติ ${coordinationActions.length} รายการ</span></div>
+                                            <div class="flex justify-between gap-2"><span class="text-indigo-500">ขั้นตอนปัจจุบัน</span><span class="font-bold text-indigo-800 text-right">${escapePopupHtml(window.normalizeCoordinationStatus(p.coordinationStatus))}</span></div>
+                                            <div class="flex justify-between gap-2"><span class="text-indigo-500">ผู้รับผิดชอบ</span><span class="font-bold text-gray-700 text-right">${escapePopupHtml(p.coordinationResponsible || p.currentResponsible || '-')}${(p.coordinationResponsiblePosition || p.currentResponsiblePosition) ? `<small class="block font-normal text-gray-500 mt-0.5">${escapePopupHtml(p.coordinationResponsiblePosition || p.currentResponsiblePosition)}</small>` : ''}</span></div>
+                                            <div class="pt-1 border-t border-indigo-100"><span class="text-indigo-500">หมายเหตุ:</span> <span class="font-bold text-gray-700">${escapePopupHtml(p.coordinationNote || p.coordinationNextAction || p.nextAction || '-')}</span></div>
+                                            <div class="text-right text-gray-500">ประวัติ ${coordinationActions.length} รายการ</div>
                                             ${latestCoordinationAction ? `<div class="pt-1 text-gray-600"><i class="fa-solid fa-clock-rotate-left mr-1 text-indigo-400"></i>ล่าสุด: <b>${escapePopupHtml(latestCoordinationAction.type || '-')}</b> ${latestCoordinationAction.date ? `(${formatPopupDate(latestCoordinationAction.date)})` : ''}</div>` : ''}
                                         </div>
                                         <button type="button" onclick="window.openProjectStatusModal('${p.id}')" class="w-full text-[9px] bg-blue-600 text-white py-1.5 rounded hover:bg-blue-700 font-bold mb-1.5"><i class="fa-solid fa-route"></i> เปิดหน้าต่างติดตามสถานะ</button>
@@ -2455,7 +2711,8 @@
                     popupHtml += `
                         <div class="flex gap-2 mt-3 pt-3 border-t border-gray-200">
                             <button type="button" onclick="window.openAddProjectFromHospital('${group.district}', '${group.title}')" class="flex-1 text-[11px] bg-blue-600 text-white py-1.5 rounded-lg shadow-sm hover:bg-blue-700 font-bold transition-colors flex justify-center items-center gap-1"><i class="fa-solid fa-plus-circle"></i> เพิ่มรายละเอียดโครงการ</button>
-                            <button type="button" onclick="window.openRenameHospitalModal('${group.district}', '${group.title}')" class="text-[11px] bg-gray-100 text-gray-700 py-1.5 px-3 rounded-lg shadow-sm hover:bg-gray-200 border border-gray-300 font-bold transition-colors flex justify-center items-center gap-1"><i class="fa-solid fa-pen"></i> แก้ไขชื่อ</button>
+                            <button type="button" onclick="window.openHospitalModalForEdit('${group.district}', '${group.title}')" class="text-[11px] bg-rose-50 text-rose-700 py-1.5 px-3 rounded-lg shadow-sm hover:bg-rose-100 border border-rose-200 font-bold transition-colors flex justify-center items-center gap-1"><i class="fa-solid fa-file-shield"></i> แก้ไขข้อมูล</button>
+                            <button type="button" onclick="window.openRenameHospitalModal('${group.district}', '${group.title}')" title="แก้ไขชื่อ รพ.สต." class="text-[11px] bg-gray-100 text-gray-700 py-1.5 px-2.5 rounded-lg shadow-sm hover:bg-gray-200 border border-gray-300 font-bold"><i class="fa-solid fa-pen"></i></button>
                         </div>
                     `;
                 }
@@ -2465,14 +2722,14 @@
                 if (group.isHospital) {
                     const hospitalIcon = L.divIcon({
                         className: 'custom-hospital-marker',
-                        html: `<div class="w-8 h-8 bg-white rounded-full border-[3px] border-red-600 flex items-center justify-center shadow-lg relative">
-                                <i class="fa-solid fa-house-medical text-red-600 text-[14px]"></i>
+                        html: `<div class="w-8 h-8 bg-white rounded-full border-[3px] flex items-center justify-center shadow-lg relative" style="border-color:${hospitalLandPermission.color};">
+                                <i class="fa-solid fa-house-medical text-[14px]" style="color:${hospitalLandPermission.color};"></i>
                                </div>`,
                         iconSize: [32, 32], iconAnchor: [16, 16]
                     });
                     const m = L.marker(group.coords, {icon: hospitalIcon}).addTo(window.map)
                         .bindPopup(popupHtml, {maxWidth: 580})
-                        .bindTooltip(`<div class="font-bold text-red-700 font-sans">${group.title} <br><span class="text-[10px] text-gray-500 font-normal">อ.${group.district}</span></div>`, {direction: 'top', offset: [0, -10]});
+                        .bindTooltip(`<div class="font-bold font-sans" style="color:${hospitalLandPermission.color};">${escapePopupHtml(group.title)}<br><span class="text-[10px] text-gray-500 font-normal">อ.${escapePopupHtml(group.district)} · ${escapePopupHtml(hospitalLandPermission.label)}</span></div>`, {direction: 'top', offset: [0, -10]});
                     window.markers.push(m);
                 } else {
                     if (group.geomType === 'line') {
@@ -2577,6 +2834,8 @@
                 if (p.sInspectorName && p.sInspectorName.trim() !== '') nameSet.add(p.sInspectorName.trim());
                 if (p.sInspectorPos && p.sInspectorPos.trim() !== '') posSet.add(p.sInspectorPos.trim());
                 if (p.coordinationResponsible && p.coordinationResponsible.trim() !== '') nameSet.add(p.coordinationResponsible.trim());
+                if (p.coordinationResponsiblePosition && p.coordinationResponsiblePosition.trim() !== '') posSet.add(p.coordinationResponsiblePosition.trim());
+                if (p.currentResponsiblePosition && p.currentResponsiblePosition.trim() !== '') posSet.add(p.currentResponsiblePosition.trim());
                 if (Array.isArray(p.coordinationActions)) p.coordinationActions.forEach(action => { if (action.officer && action.officer.trim() !== '') nameSet.add(action.officer.trim()); });
             });
             
@@ -2612,11 +2871,10 @@
             
             document.getElementById('sInspectorName').value = '';
             document.getElementById('sInspectorPos').value = '';
-            document.getElementById('sCoordStatus').value = 'รับเรื่องแล้ว';
+            document.getElementById('sCoordStatus').value = 'รับเรื่องจาก รพ.สต.';
             document.getElementById('sCoordResponsible').value = '';
-            document.getElementById('sCoordPriority').value = 'ปกติ';
-            document.getElementById('sCoordNextDueDate').value = '';
-            document.getElementById('sCoordNextAction').value = '';
+            document.getElementById('sCoordResponsiblePosition').value = '';
+            document.getElementById('sCoordNote').value = '';
             document.getElementById('sCoordSelectionResult').value = 'อยู่ระหว่างพิจารณา';
             document.getElementById('sCoordSelectionDate').value = '';
             document.getElementById('sCoordSelectionNote').value = '';
@@ -2629,10 +2887,8 @@
             document.getElementById('pWorkType').value = '';
             document.getElementById('pStatus').value = 'เสนอความต้องการ';
             document.getElementById('pCurrentResponsible').value = '';
-            document.getElementById('pStageStartDate').value = window.todayISO();
-            document.getElementById('pStageDueDate').value = '';
-            document.getElementById('pDocumentsStatus').value = 'not_required';
-            document.getElementById('pNextAction').value = '';
+            document.getElementById('pResponsiblePosition').value = '';
+            document.getElementById('pNote').value = '';
             document.getElementById('pHospital').value = '';
             document.getElementById('pHospitalList').innerHTML = '';
             document.getElementById('pHospital').disabled = true;
@@ -2667,7 +2923,7 @@
                 catch (error) { window.showAlert(`โหลดรูปภาพบางรายการไม่สำเร็จ\n${error.message || error}`); }
             }
 
-            document.getElementById('pName').value = p.name || '';
+            document.getElementById('pName').value = window.getProjectDisplayName(p, '');
             document.getElementById('pWorkType').value = p.workType || '';
             document.getElementById('pDistrict').value = p.district || '';
             window.updateHospitalList(p.hospital || ''); 
@@ -2678,11 +2934,10 @@
             document.getElementById('pContractor').value = p.contractor || '';
             document.getElementById('pBudgetType').value = p.budgetType || 'ข้อบัญญัติ';
             window.toggleFormLayout();
-            document.getElementById('sCoordStatus').value = 'รับเรื่องแล้ว';
+            document.getElementById('sCoordStatus').value = 'รับเรื่องจาก รพ.สต.';
             document.getElementById('sCoordResponsible').value = '';
-            document.getElementById('sCoordPriority').value = 'ปกติ';
-            document.getElementById('sCoordNextDueDate').value = '';
-            document.getElementById('sCoordNextAction').value = '';
+            document.getElementById('sCoordResponsiblePosition').value = '';
+            document.getElementById('sCoordNote').value = '';
             document.getElementById('sCoordSelectionResult').value = 'อยู่ระหว่างพิจารณา';
             document.getElementById('sCoordSelectionDate').value = '';
             document.getElementById('sCoordSelectionNote').value = '';
@@ -2695,7 +2950,7 @@
                 document.getElementById('sOrder').value = p.sOrder || '1';
                 document.getElementById('sCoordinationYear').value = p.coordinationYear || (/^[0-9]{4}$/.test(String(p.year || '')) ? p.year : '');
                 document.getElementById('sNameOld').value = p.sNameOld || '';
-                document.getElementById('sNameNew').value = p.name || '';
+                document.getElementById('sNameNew').value = window.getProjectDisplayName(p, '');
                 document.getElementById('sDetails').value = p.sDetails || '';
                 
                 document.getElementById('sBudget66').value = p.sBudget66 || '';
@@ -2707,7 +2962,6 @@
                 if (document.getElementById('sCheck1')) document.getElementById('sCheck1').checked = (p.sCheck1 === true || p.sCheck1 === 'true');
                 if (document.getElementById('sCheck2')) document.getElementById('sCheck2').checked = (p.sCheck2 === true || p.sCheck2 === 'true');
                 if (document.getElementById('sCheck3')) document.getElementById('sCheck3').checked = (p.sCheck3 === true || p.sCheck3 === 'true');
-                if (document.getElementById('sCheck4')) document.getElementById('sCheck4').checked = (p.sCheck4 === true || p.sCheck4 === 'true');
                 if (document.getElementById('sCheck5')) document.getElementById('sCheck5').checked = (p.sCheck5 === true || p.sCheck5 === 'true');
                 
                 if (document.getElementById('sCheck5Text')) document.getElementById('sCheck5Text').value = p.sCheck5Text || '';
@@ -2715,15 +2969,15 @@
                 document.getElementById('sInspectorName').value = p.sInspectorName || '';
                 document.getElementById('sInspectorPos').value = p.sInspectorPos || '';
                 document.getElementById('sInspectDate').value = p.sInspectDate || '';
-                document.getElementById('sCoordStatus').value = p.coordinationStatus || (p.sInspectDate ? 'สำรวจพื้นที่แล้ว' : 'รับเรื่องแล้ว');
+                document.getElementById('sCoordStatus').value = window.normalizeCoordinationStatus(p.coordinationStatus || (p.sInspectDate ? 'สำรวจพื้นที่' : 'รับเรื่องจาก รพ.สต.'));
                 document.getElementById('sCoordResponsible').value = p.coordinationResponsible || p.currentResponsible || '';
-                document.getElementById('sCoordPriority').value = p.coordinationPriority || 'ปกติ';
-                document.getElementById('sCoordNextDueDate').value = p.coordinationNextDueDate || p.stageDueDate || '';
-                document.getElementById('sCoordNextAction').value = p.coordinationNextAction || p.nextAction || '';
+                document.getElementById('sCoordResponsiblePosition').value = p.coordinationResponsiblePosition || p.currentResponsiblePosition || '';
+                document.getElementById('sCoordNote').value = p.coordinationNote || p.coordinationNextAction || p.nextAction || '';
                 document.getElementById('sCoordSelectionResult').value = p.coordinationSelectionResult || 'อยู่ระหว่างพิจารณา';
                 document.getElementById('sCoordSelectionDate').value = p.coordinationSelectionDate || '';
                 document.getElementById('sCoordSelectionNote').value = p.coordinationSelectionNote || '';
                 window.currentCoordinationOrdinanceProjectId = p.ordinanceProjectId || '';
+                window.syncCoordinationStatusFromSelection();
                 const coordinationActions = Array.isArray(p.coordinationActions) && p.coordinationActions.length
                     ? p.coordinationActions
                     : (p.sInspectDate ? [{ id: `legacy_survey_${p.id}`, date: p.sInspectDate, type: 'สำรวจพื้นที่', resultStatus: 'ดำเนินการแล้ว', officer: p.sInspectorName || '', detail: 'ตรวจสอบพื้นที่ตามข้อมูลโครงการเดิม', createdAt: p.lastUpdatedAt || new Date().toISOString() }] : []);
@@ -2738,16 +2992,14 @@
             document.getElementById('pMedianPrice').value = p.medianPrice || '';
             document.getElementById('pContractPrice').value = p.contractPrice || '';
 
-            let baseStatus = window.normalizeProjectStage(p.status);
+            let baseStatus = window.getProjectMainStage(p);
             window.originalEditingStage = baseStatus;
             let instNum = '';
             document.getElementById('pStatus').value = baseStatus;
             document.getElementById('pInstallment').value = instNum;
             document.getElementById('pCurrentResponsible').value = p.currentResponsible || '';
-            document.getElementById('pStageStartDate').value = p.stageStartDate || (p.lastUpdatedAt ? String(p.lastUpdatedAt).slice(0,10) : '');
-            document.getElementById('pStageDueDate').value = p.stageDueDate || '';
-            document.getElementById('pDocumentsStatus').value = p.documentsStatus || 'not_required';
-            document.getElementById('pNextAction').value = p.nextAction || '';
+            document.getElementById('pResponsiblePosition').value = p.currentResponsiblePosition || '';
+            document.getElementById('pNote').value = p.nextAction || p.note || '';
 
             document.getElementById('supervisorsContainer').innerHTML = '';
             if (p.supervisors && p.supervisors.length > 0) {
@@ -2892,14 +3144,13 @@
                         sCheck1: document.getElementById('sCheck1') ? document.getElementById('sCheck1').checked : false,
                         sCheck2: document.getElementById('sCheck2') ? document.getElementById('sCheck2').checked : false,
                         sCheck3: document.getElementById('sCheck3') ? document.getElementById('sCheck3').checked : false,
-                        sCheck4: document.getElementById('sCheck4') ? document.getElementById('sCheck4').checked : false,
                         sCheck5: document.getElementById('sCheck5') ? document.getElementById('sCheck5').checked : false,
                         sCheck5Text: document.getElementById('sCheck5Text') ? document.getElementById('sCheck5Text').value.trim() : '',
                         coordinationStatus: document.getElementById('sCoordStatus').value,
                         coordinationResponsible: document.getElementById('sCoordResponsible').value.trim(),
-                        coordinationPriority: document.getElementById('sCoordPriority').value,
-                        coordinationNextDueDate: document.getElementById('sCoordNextDueDate').value,
-                        coordinationNextAction: document.getElementById('sCoordNextAction').value.trim(),
+                        coordinationResponsiblePosition: document.getElementById('sCoordResponsiblePosition').value.trim(),
+                        coordinationNote: document.getElementById('sCoordNote').value.trim(),
+                        coordinationNextAction: document.getElementById('sCoordNote').value.trim(),
                         coordinationActions: coordinationActions,
                         coordinationSelectionResult: document.getElementById('sCoordSelectionResult').value,
                         coordinationSelectionDate: document.getElementById('sCoordSelectionDate').value,
@@ -2919,7 +3170,7 @@
                     }
                     if (!window.hospitalData[distValue].includes(cleanHospValue)) {
                         window.hospitalData[distValue].push(cleanHospValue);
-                        const newHospData = { id: 'hosp_' + Date.now(), name: cleanHospValue, district: distValue, lat: null, lng: null };
+                        const newHospData = { id: 'hosp_' + Date.now(), name: cleanHospValue, district: distValue, lat: null, lng: null, landUsePermissionStatus: 'checking' };
                         if(!window.hospitalsData) window.hospitalsData = [];
                         window.hospitalsData.push(newHospData);
                         if (window.saveHospitalToCloud) window.saveHospitalToCloud(newHospData);
@@ -3004,10 +3255,14 @@
                     contractPrice: parseFloat(document.getElementById('pContractPrice').value) || 0, 
                     status: finalStatus,
                     currentResponsible: isSurvey ? document.getElementById('sCoordResponsible').value.trim() : document.getElementById('pCurrentResponsible').value.trim(),
-                    stageStartDate: stageChanged ? window.todayISO() : document.getElementById('pStageStartDate').value,
-                    stageDueDate: isSurvey ? document.getElementById('sCoordNextDueDate').value : document.getElementById('pStageDueDate').value,
-                    documentsStatus: document.getElementById('pDocumentsStatus').value,
-                    nextAction: isSurvey ? document.getElementById('sCoordNextAction').value.trim() : document.getElementById('pNextAction').value.trim(),
+                    currentResponsiblePosition: isSurvey ? document.getElementById('sCoordResponsiblePosition').value.trim() : document.getElementById('pResponsiblePosition').value.trim(),
+                    stageStartDate: isSurvey
+                        ? window.getProjectStageStartDate({...(previousProject || {}), budgetType: bType, status: finalStatus, coordinationStatus: surveyData.coordinationStatus, coordinationActions: surveyData.coordinationActions}) || (stageChanged ? window.todayISO() : previousProject?.stageStartDate || window.todayISO())
+                        : (stageChanged ? window.todayISO() : previousProject?.stageStartDate || window.todayISO()),
+                    stageDueDate: previousProject?.stageDueDate || '',
+                    documentsStatus: previousProject?.documentsStatus || 'not_required',
+                    nextAction: isSurvey ? document.getElementById('sCoordNote').value.trim() : document.getElementById('pNote').value.trim(),
+                    note: isSurvey ? document.getElementById('sCoordNote').value.trim() : document.getElementById('pNote').value.trim(),
                     lastUpdatedAt: new Date().toISOString(),
                     stageHistory: stageHistory,
                     geomType: document.querySelector('input[name="pGeomType"]:checked').value, lineStyle: document.getElementById('pLineStyle').value,
@@ -3049,7 +3304,7 @@
                 const saveSuccessText = window.editingProjectId ? "อัปเดตข้อมูลโครงการและรูปภาพสำเร็จ" : "เพิ่มโครงการใหม่และบันทึกรูปภาพสำเร็จ";
                 window.closeModal();
                 if (needsPromotion) {
-                    window.showConfirm('บันทึกผลการพิจารณาเรียบร้อยแล้ว\n\nโครงการนี้ได้รับคัดเลือกเข้าสู่ข้อบัญญัติ ต้องการสร้างโครงการข้อบัญญัติที่ขั้นที่ 5 — จัดสรรงบประมาณ ต่อทันทีหรือไม่?', () => window.openPromoteCoordinationModal(projId));
+                    window.showConfirm('บันทึกขั้นที่ 11 “โครงการถูกคัดเลือกเป็นข้อบัญญัติ” เรียบร้อยแล้ว\n\nต้องการสร้างแฟ้มโครงการข้อบัญญัติที่เริ่มขั้นที่ 5 — จัดสรรงบประมาณ ต่อทันทีหรือไม่?', () => window.openPromoteCoordinationModal(projId));
                 } else {
                     window.showAlert(saveSuccessText);
                 }
@@ -3190,8 +3445,9 @@
                     const sourceUpdate = {
                         ordinanceProjectId:null, ordinanceProjectName:'', ordinancePromotedAt:null, ordinancePromotedBy:null,
                         coordinationSelectionResult:'อยู่ระหว่างพิจารณา', coordinationSelectionDate:'',
-                        coordinationStatus:'สิ้นสุดการประสานแผน',
-                        nextAction:'รอพิจารณาเข้าสู่ข้อบัญญัติอีกครั้ง', coordinationNextAction:'รอพิจารณาเข้าสู่ข้อบัญญัติอีกครั้ง',
+                        coordinationStatus:'โครงการถูกคัดเลือกเข้าแผน',
+                        status:'ประสานแผน',
+                        nextAction:'รอการคัดเลือกเป็นข้อบัญญัติอีกครั้ง', coordinationNextAction:'รอการคัดเลือกเป็นข้อบัญญัติอีกครั้ง',
                         returnedFromOrdinanceAt:now, returnedFromOrdinanceReason:reason || '', coordinationActions:actionHistory, lastUpdatedAt:now
                     };
                     const uniqueOrdinanceImages = (Array.isArray(pair.ordinance.images) ? pair.ordinance.images : []).filter(item => {
@@ -3253,13 +3509,32 @@
             window.showConfirm(messages[action], () => window.executeLinkedProjectAction(action, reason));
         };
 
+        window.showProjectRecordInfo = function(id) {
+            const project = window.projects.find(p => String(p.id) === String(id));
+            if (!project) { window.showAlert('ไม่พบรายการโครงการในข้อมูลที่โหลดอยู่'); return; }
+            const missingFields = window.getProjectMissingFields(project);
+            const category = window.getProjectCategory(project);
+            const rawDate = project.createdAt || project.lastUpdatedAt || project.stageStartDate || '';
+            const recordDate = rawDate && !Number.isNaN(new Date(rawDate).getTime()) ? new Date(rawDate).toLocaleString('th-TH') : '-';
+            window.showAlert(`ข้อมูลอ้างอิงโครงการ\n\nชื่อ: ${window.getProjectDisplayName(project)}\nประเภท: ${category.label}\nรหัสข้อมูล: ${project.id}\nรพ.สต.: ${project.hospital || '-'}\nอำเภอ: ${project.district || '-'}\nปีงบประมาณ: ${project.year || project.coordinationYear || '-'}\nวันที่บันทึก/แก้ไข: ${recordDate}\nข้อมูลที่ขาด: ${missingFields.length ? missingFields.join(', ') : 'ไม่มี'}`);
+        };
+
         window.confirmDeleteProject = function(id) {
+            if (window.userRole !== 'admin') { window.showAlert('เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถลบโครงการได้'); return; }
             const targetProject = window.projects.find(p => String(p.id) === String(id));
-            if (targetProject?.ordinanceProjectId || targetProject?.sourceCoordinationId || window.projects.some(p => String(p.sourceCoordinationId || '') === String(id))) {
+            if (!targetProject) { window.showAlert('ไม่พบรายการโครงการในข้อมูลที่โหลดอยู่ กรุณารีเฟรชแล้วลองใหม่'); return; }
+            const hasLinkReference = Boolean(targetProject.ordinanceProjectId || targetProject.sourceCoordinationId || window.projects.some(p => String(p.sourceCoordinationId || '') === String(id)));
+            const linkedPair = hasLinkReference ? window.getLinkedProjectPair(id) : null;
+            if (linkedPair?.source && linkedPair?.ordinance) {
                 window.openLinkedProjectDeleteModal(id);
                 return;
             }
-            window.showConfirm("คุณแน่ใจหรือไม่ว่าต้องการลบโครงการนี้?\nข้อมูลที่ลบจะไม่สามารถกู้คืนได้", async () => {
+            const projectName = window.getProjectDisplayName(targetProject);
+            const missingFields = window.getProjectMissingFields(targetProject);
+            const warning = hasLinkReference
+                ? '\n\nตรวจพบข้อมูลเชื่อมโยงไม่สมบูรณ์ ระบบจะลบเฉพาะระเบียนนี้เท่านั้น'
+                : (missingFields.length ? `\n\nข้อมูลที่ขาด: ${missingFields.join(', ')}` : '');
+            window.showConfirm(`ยืนยันลบรายการนี้หรือไม่?\n${projectName}\nรหัสข้อมูล: ${id}${warning}\n\nข้อมูลที่ลบจะไม่สามารถกู้คืนได้`, async () => {
                 if (window.deleteProjectFromCloud) {
                     const cloudDeleted = await window.deleteProjectFromCloud(id);
                     if (cloudDeleted === false) return;
@@ -3267,10 +3542,9 @@
                 window.projects = window.projects.filter(p => p.id.toString() !== id.toString());
                 window.updateMainMapYearFilter();
                 window.renderMarkers();
-                window.updateAlertCenterBadge();
+                window.refreshOperationalViews();
                 if(!document.getElementById('searchModal').classList.contains('hidden')) window.openSearchModal();
-                if(!document.getElementById('dashboardModal').classList.contains('hidden')) window.renderDashboard();
-                window.showAlert("ลบข้อมูลโครงการและรูปภาพที่เกี่ยวข้องเรียบร้อยแล้ว");
+                window.showAlert(`ลบรายการเรียบร้อยแล้ว\nรหัสข้อมูล: ${id}`);
             });
         };
 
@@ -3358,6 +3632,9 @@
 
                                 let actionBtnsGrid = '';
                                 const isSurveyMode = p.budgetType && p.budgetType.includes('สำรวจ');
+                                const projectMainStage = window.getProjectMainStage(p);
+                                const projectStatusCaption = isSurveyMode ? 'สถานะประสานแผน' : 'ขั้นตอนหลัก';
+                                const projectStatusDisplay = isSurveyMode ? window.normalizeCoordinationStatus(p.coordinationStatus) : projectMainStage;
                                 
                                 if (window.userRole === 'admin') {
                                     actionBtnsGrid = `
@@ -3400,7 +3677,7 @@
                                 <div class="p-3 border border-gray-200 rounded-lg bg-gray-50 hover:border-blue-300 transition-all flex flex-col gap-2 shadow-sm">
                                     <div class="flex justify-between items-start">
                                         <div class="flex-1 pr-2">
-                                            <h3 class="font-bold text-sm text-blue-800 leading-tight">${p.name}</h3>
+                                            <h3 class="font-bold text-sm text-blue-800 leading-tight">${window.escapeHtml(window.getProjectDisplayName(p))}</h3>
                                             <div class="grid grid-cols-2 gap-y-1.5 gap-x-2 text-[11px] mt-2">
                                                 <div class="col-span-2 text-gray-600 border-b border-gray-100 pb-1 mb-0.5">
                                                     <span class="text-gray-400 font-normal"><i class="fa-solid fa-house-medical text-rose-400 mr-1"></i> รพ.สต.:</span> 
@@ -3408,11 +3685,11 @@
                                                 </div>
                                                 <div class="text-gray-600"><span class="text-gray-400 font-normal">ประเภทงาน:</span> <span class="font-bold">${p.workType || '-'}</span></div>
                                                 <div class="text-gray-600"><span class="text-gray-400 font-normal">งบประมาณ:</span> <span class="font-bold text-blue-600">฿${(p.budget || 0).toLocaleString()}</span></div>
-                                                <div class="text-gray-600"><span class="text-gray-400 font-normal">สถานะ:</span> <span class="font-bold ${p.status && p.status.includes('แล้วเสร็จ') ? 'text-green-600' : 'text-orange-500'}">${p.status || 'รอดำเนินการ'}</span></div>
+                                                <div class="text-gray-600"><span class="text-gray-400 font-normal">${projectStatusCaption}:</span> <span class="font-bold ${window.isProjectCompleted(p) ? 'text-green-600' : 'text-orange-500'}">${projectStatusDisplay}</span></div>
                                             </div>
                                             <div class="flex flex-wrap gap-2 mt-2.5">
                                                 ${p.sourceCoordinationId ? `<span class="text-[9px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200"><i class="fa-solid fa-link"></i> มาจากโครงการประสานแผน</span>` : ''}
-                                                ${isSurveyMode && p.coordinationSelectionResult === 'ได้รับคัดเลือกเข้าสู่ข้อบัญญัติ' && !p.ordinanceProjectId ? `<span class="text-[9px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded border border-amber-300 font-bold"><i class="fa-solid fa-hourglass-half"></i> รอยกระดับเป็นข้อบัญญัติ</span>` : ''}
+                                                ${isSurveyMode && p.coordinationSelectionResult === 'ได้รับคัดเลือกเข้าสู่ข้อบัญญัติ' && !p.ordinanceProjectId ? `<span class="text-[9px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded border border-amber-300 font-bold"><i class="fa-solid fa-hourglass-half"></i> รอสร้างโครงการข้อบัญญัติ</span>` : ''}
                                                 ${hasGis ? `<span class="text-[9px] bg-green-100 text-green-700 px-2 py-0.5 rounded border border-green-200"><i class="fa-solid fa-map-pin"></i> ${p.geomType==='line' ? 'แบบเส้น' : 'แบบจุด'}</span>` : '<span class="text-[9px] bg-gray-200 text-gray-500 px-2 py-0.5 rounded border border-gray-300"><i class="fa-solid fa-map-pin"></i> ไม่มีพิกัด</span>'}
                                                 ${hasActs ? `<span class="text-[9px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded border border-indigo-200"><i class="fa-solid fa-tasks"></i> มีแผนงาน</span>` : '<span class="text-[9px] bg-gray-200 text-gray-500 px-2 py-0.5 rounded border border-gray-300"><i class="fa-solid fa-tasks"></i> ไม่มีแผนงาน</span>'}
                                                 ${hasImgs ? `<span class="text-[9px] bg-pink-100 text-pink-700 px-2 py-0.5 rounded border border-pink-200"><i class="fa-solid fa-images"></i> ${p.images.length} รูป</span>` : ''}
@@ -3445,8 +3722,19 @@
             document.getElementById('hospName').disabled = true;
             document.getElementById('hospLat').value = '';
             document.getElementById('hospLng').value = '';
+            document.getElementById('hospLandPermissionStatus').value = 'checking';
+            window.updateHospitalLandPermissionNotice();
             document.getElementById('hospitalModal').classList.remove('hidden');
             document.getElementById('hospitalModal').classList.add('flex');
+        };
+
+        window.openHospitalModalForEdit = function(district, name) {
+            window.map.closePopup();
+            window.openHospitalModal();
+            document.getElementById('hospDistrict').value = district || '';
+            window.updateHospitalModalList();
+            document.getElementById('hospName').value = name || '';
+            window.loadHospitalData();
         };
 
         window.closeHospitalModal = function() {
@@ -3474,12 +3762,15 @@
             }
             document.getElementById('hospLat').value = '';
             document.getElementById('hospLng').value = '';
+            document.getElementById('hospLandPermissionStatus').value = 'checking';
+            window.updateHospitalLandPermissionNotice();
         };
 
         window.loadHospitalData = function() {
             const hospName = document.getElementById('hospName').value.trim();
             if (!hospName) return;
-            const existing = window.hospitalsData.find(h => h.name === hospName);
+            const district = document.getElementById('hospDistrict').value;
+            const existing = window.findHospitalRecord(hospName, district);
             if (existing && existing.lat && existing.lng) {
                 document.getElementById('hospLat').value = existing.lat;
                 document.getElementById('hospLng').value = existing.lng;
@@ -3487,6 +3778,8 @@
                 document.getElementById('hospLat').value = '';
                 document.getElementById('hospLng').value = '';
             }
+            document.getElementById('hospLandPermissionStatus').value = window.getHospitalLandPermissionStatus(existing || {name:hospName, district});
+            window.updateHospitalLandPermissionNotice();
         };
 
         window.saveHospital = function(e) {
@@ -3495,15 +3788,16 @@
             const name = document.getElementById('hospName').value.trim();
             const lat = parseFloat(document.getElementById('hospLat').value);
             const lng = parseFloat(document.getElementById('hospLng').value);
+            const landUsePermissionStatus = document.getElementById('hospLandPermissionStatus').value;
 
             if (!name || isNaN(lat) || isNaN(lng)) {
                 window.showAlert('กรุณากรอกข้อมูลอำเภอ ชื่อ รพ.สต. และพิกัดให้ครบถ้วน');
                 return;
             }
 
-            const data = { name, district, lat, lng };
+            const index = window.hospitalsData.findIndex(h => h.name === name && h.district === district);
+            const data = { ...(index > -1 ? window.hospitalsData[index] : {}), name, district, lat, lng, landUsePermissionStatus };
             
-            const index = window.hospitalsData.findIndex(h => h.name === name);
             if (index > -1) {
                 data.id = window.hospitalsData[index].id;
                 window.hospitalsData[index] = data;
@@ -3518,7 +3812,7 @@
             }
 
             window.renderMarkers();
-            window.showAlert('บันทึกข้อมูลพิกัด รพ.สต. เรียบร้อยแล้ว');
+            window.showAlert(`บันทึกข้อมูล รพ.สต. เรียบร้อยแล้ว\nสถานะสิทธิที่ดิน: ${window.getHospitalLandPermissionMeta(landUsePermissionStatus).label}`);
             window.closeHospitalModal();
 
             if (window.saveHospitalToCloud) {
@@ -3585,8 +3879,6 @@
 
         window.toggleStatusDependentFields = function() {
             const status = document.getElementById('pStatus').value;
-            const stageStartInput = document.getElementById('pStageStartDate');
-            if (stageStartInput && ((!window.originalEditingStage && !stageStartInput.value) || (window.originalEditingStage && status !== window.originalEditingStage))) stageStartInput.value = window.todayISO();
             const installmentInput = document.getElementById('pInstallment');
             installmentInput.classList.add('hidden'); installmentInput.required = false; installmentInput.value = '';
 
@@ -3857,7 +4149,7 @@
             window.lightboxImages = resolved.map(window.getAttachmentSource).filter(Boolean);
             if (!window.lightboxImages.length) return;
             window.lightboxIndex = Math.max(0, Math.min(Number(imageIndex) || 0, window.lightboxImages.length - 1));
-            window.lightboxProjectName = project.name || 'รูปภาพโครงการ';
+            window.lightboxProjectName = window.getProjectDisplayName(project, 'รูปภาพโครงการ');
             window.renderImageLightbox();
             const modal = document.getElementById('imageLightboxModal');
             modal.classList.remove('hidden');
@@ -3911,9 +4203,9 @@
             const p = window.projects.find(proj => proj.id.toString() === id.toString());
             if (!p) return;
             window.progressProjectId = id; window.closeSearchModal();
-            document.getElementById('progProjectName').innerText = p.name;
+            document.getElementById('progProjectName').innerText = window.getProjectDisplayName(p);
             const supStr = p.supervisors && p.supervisors.length > 0 ? p.supervisors.map(s=>s.name).join(', ') : '-';
-            document.getElementById('progProjectDetails').innerHTML = `<span class="font-bold">สถานะ:</span> <span class="text-orange-600">${p.status}</span> | <span class="font-bold">ผู้ควบคุมงาน:</span> ${supStr}`;
+            document.getElementById('progProjectDetails').innerHTML = `<span class="font-bold">ขั้นตอนหลัก:</span> <span class="text-orange-600">${window.getProjectMainStage(p)}</span> | <span class="font-bold">ผู้ควบคุมงาน:</span> ${supStr}`;
 
             const container = document.getElementById('progressActivitiesContainer');
             container.innerHTML = '';
@@ -4014,7 +4306,7 @@
             let resolvedImages = Array.isArray(p.images) ? [...p.images] : [];
             try { if (window.resolveProjectImages) resolvedImages = await window.resolveProjectImages(p); }
             catch (error) { window.showAlert(`โหลดรูปสำหรับรายงานไม่สำเร็จ\n${error.message || error}`); }
-            document.getElementById('rptName').innerText = p.name || '-'; document.getElementById('rptWorkType').innerText = p.workType || '-'; document.getElementById('rptDistrict').innerText = p.district || '-'; document.getElementById('rptYear').innerText = p.year || '-'; document.getElementById('rptBudgetType').innerText = p.budgetType || '-'; document.getElementById('rptBudget').innerText = (p.budget || 0).toLocaleString(); document.getElementById('rptMedianPrice').innerText = (p.medianPrice || 0).toLocaleString(); document.getElementById('rptContractPrice').innerText = (p.contractPrice || 0).toLocaleString(); document.getElementById('rptContractStartDate').innerText = p.contractStartDate ? new Date(p.contractStartDate).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }) : '-'; document.getElementById('rptContractEndDate').innerText = p.contractEndDate ? new Date(p.contractEndDate).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }) : '-'; document.getElementById('rptRef').innerText = `เล่ม ${p.volume || '-'} / หน้า ${p.page || '-'}`; document.getElementById('rptStatus').innerText = p.status || '-';
+            document.getElementById('rptName').innerText = window.getProjectDisplayName(p, '-'); document.getElementById('rptWorkType').innerText = p.workType || '-'; document.getElementById('rptDistrict').innerText = p.district || '-'; document.getElementById('rptYear').innerText = p.year || '-'; document.getElementById('rptBudgetType').innerText = p.budgetType || '-'; document.getElementById('rptBudget').innerText = (p.budget || 0).toLocaleString(); document.getElementById('rptMedianPrice').innerText = (p.medianPrice || 0).toLocaleString(); document.getElementById('rptContractPrice').innerText = (p.contractPrice || 0).toLocaleString(); document.getElementById('rptContractStartDate').innerText = p.contractStartDate ? new Date(p.contractStartDate).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }) : '-'; document.getElementById('rptContractEndDate').innerText = p.contractEndDate ? new Date(p.contractEndDate).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }) : '-'; document.getElementById('rptRef').innerText = `เล่ม ${p.volume || '-'} / หน้า ${p.page || '-'}`; document.getElementById('rptStatus').innerText = window.getProjectMainStage(p);
             let supsHtml = ''; if (p.supervisors && p.supervisors.length > 0) { p.supervisors.forEach((s, idx) => { supsHtml += `<div>${idx+1}. ${s.name} (${s.position})</div>`; }); } else { supsHtml = '-'; } document.getElementById('rptSupervisors').innerHTML = supsHtml;
             const imgContainer = document.getElementById('rptImages'); imgContainer.innerHTML = '';
             if (resolvedImages.length > 0) { resolvedImages.forEach(item => { const src = window.getAttachmentSource(item); if (src) imgContainer.innerHTML += `<div class="border border-gray-300 rounded p-1 h-40 flex items-center justify-center bg-gray-50 overflow-hidden"><img src="${src}" class="w-full h-full object-contain"></div>`; }); } else { imgContainer.innerHTML = '<div class="col-span-3 text-center text-gray-400 italic py-4 text-sm">ไม่ได้แนบรูปภาพหน้างาน</div>'; }
@@ -4047,7 +4339,7 @@
 
         window.openReportV124 = function(id) {
             const p = window.projects.find(proj => proj.id.toString() === id.toString()); if (!p) return; window.closeSearchModal(); document.body.classList.add('printing-v124'); 
-            document.getElementById('v124ProjectName').innerText = p.name || '-';
+            document.getElementById('v124ProjectName').innerText = window.getProjectDisplayName(p, '-');
             document.getElementById('v124ContractNo').innerText = p.contractNo || '-';
             document.getElementById('v124Contractor').innerText = p.contractor || '-';
             let durationStr = '-';
@@ -4112,7 +4404,7 @@
             document.getElementById('rptSurveyAgency').innerHTML = `<b>${distTxt}</b><br>${agnTxt}`;
             
             document.getElementById('rptSurveyNameOld').innerHTML = (p.sNameOld || '-').replace(/\n/g, '<br>');
-            document.getElementById('rptSurveyNameNew').innerHTML = (p.name || '-').replace(/\n/g, '<br>');
+            document.getElementById('rptSurveyNameNew').innerHTML = window.escapeHtml(window.getProjectDisplayName(p, '-')).replace(/\n/g, '<br>');
             document.getElementById('rptSurveyDetails').innerHTML = (p.sDetails || '-').replace(/\n/g, '<br>');
             
             const formatB = (val) => val && val > 0 ? parseFloat(val).toLocaleString() : '-';
@@ -4123,12 +4415,14 @@
             document.getElementById('rptSurveyB70').innerHTML = formatB(p.sBudget70);
             
             const cbBox = (checked) => checked ? '<i class="fa-regular fa-square-check"></i>' : '<i class="fa-regular fa-square"></i>';
+            const landPermission = window.getHospitalLandPermissionMeta(p);
             let checksHtml = `
                 <div>${cbBox(p.sCheck1)} 1. ขนาดพื้นที่เป็นไปตามกรอบฯ</div>
                 <div>${cbBox(p.sCheck2)} 2. พิกัดทางภูมิศาสตร์ถูกต้อง</div>
                 <div>${cbBox(p.sCheck3)} 3. ความพร้อมของพื้นที่</div>
-                <div>${cbBox(p.sCheck4)} 4. หนังสืออนุญาตการใช้พื้นที่</div>
-                <div>${cbBox(p.sCheck5)} 5. อื่นๆ ${p.sCheck5Text ? `(${p.sCheck5Text})` : ''}</div>
+                <div>${cbBox(p.sCheck5)} 4. อื่นๆ ${p.sCheck5Text ? `(${p.sCheck5Text})` : ''}</div>
+                <div style="border-top:1px solid #94a3b8;margin-top:4px;padding-top:4px;"><b>ข้อมูลหลักของ รพ.สต.:</b><br><i class="fa-solid ${landPermission.icon}"></i> ${window.escapeHtml(landPermission.label)}</div>
+                <div style="font-weight:700;${landPermission.status === 'not_approved' ? 'color:#b91c1c;' : landPermission.status === 'approved' ? 'color:#15803d;' : 'color:#92400e;'}">${window.escapeHtml(landPermission.readiness)}</div>
             `;
             document.getElementById('rptSurveyChecks').innerHTML = checksHtml;
             
@@ -4152,7 +4446,7 @@
                 const actionGroups = [];
                 for (let i = 0; i < actions.length; i += 8) actionGroups.push(actions.slice(i, i + 8));
                 if (!actionGroups.length) actionGroups.push([]);
-                const safeProject = window.escapeHtml(p.name || p.sNameOld || 'ไม่ระบุชื่อโครงการ');
+                const safeProject = window.escapeHtml(window.getProjectDisplayName(p));
                 const safeAgency = window.escapeHtml([p.hospital, p.district ? `อำเภอ${p.district}` : ''].filter(Boolean).join(' · ') || '-');
                 actionGroups.forEach((group, pageIndex) => {
                     const rows = group.length ? group.map((action, index) => {
@@ -4161,7 +4455,7 @@
                         return `<tr>
                             <td class="p-2 text-center">${pageIndex * 8 + index + 1}</td>
                             <td class="p-2 text-center whitespace-nowrap">${window.escapeHtml(window.formatThaiDate ? window.formatThaiDate(action.date) : (action.date || '-'))}</td>
-                            <td class="p-2 font-bold text-indigo-900">${window.escapeHtml(action.type || '-')}</td>
+                            <td class="p-2 font-bold text-indigo-900">${window.escapeHtml(window.normalizeCoordinationActionType(action.type || '-'))}</td>
                             <td class="p-2">${detail}</td>
                             <td class="p-2">${window.escapeHtml(action.officer || '-')}</td>
                             <td class="p-2">${window.escapeHtml(reference)}</td>
@@ -4176,9 +4470,8 @@
                         </header>
                         <div class="mt-3 bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-2.5 grid grid-cols-[110px_1fr_110px_1fr] gap-x-3 gap-y-1 text-[11px]">
                             <div class="font-bold text-indigo-900">โครงการ</div><div>${safeProject}</div><div class="font-bold text-indigo-900">หน่วยงาน/พื้นที่</div><div>${safeAgency}</div>
-                            <div class="font-bold text-indigo-900">สถานะปัจจุบัน</div><div class="font-bold">${window.escapeHtml(p.coordinationStatus || 'รับเรื่องแล้ว')}</div><div class="font-bold text-indigo-900">ผู้รับผิดชอบ</div><div>${window.escapeHtml(p.coordinationResponsible || p.currentResponsible || '-')}</div>
-                            <div class="font-bold text-indigo-900">ติดตามครั้งถัดไป</div><div>${window.escapeHtml(window.formatThaiDate ? window.formatThaiDate(p.coordinationNextDueDate) : (p.coordinationNextDueDate || '-'))}</div><div class="font-bold text-indigo-900">ความเร่งด่วน</div><div>${window.escapeHtml(p.coordinationPriority || 'ปกติ')}</div>
-                            <div class="font-bold text-indigo-900">สิ่งที่ต้องทำต่อ</div><div class="col-span-3">${window.escapeHtml(p.coordinationNextAction || '-')}</div>
+                            <div class="font-bold text-indigo-900">สถานะปัจจุบัน</div><div class="font-bold">${window.escapeHtml(window.normalizeCoordinationStatus(p.coordinationStatus))}</div><div class="font-bold text-indigo-900">ผู้รับผิดชอบ</div><div>${window.escapeHtml(p.coordinationResponsible || p.currentResponsible || '-')}${(p.coordinationResponsiblePosition || p.currentResponsiblePosition) ? `<div class="text-[10px] text-gray-500">${window.escapeHtml(p.coordinationResponsiblePosition || p.currentResponsiblePosition)}</div>` : ''}</div>
+                            <div class="font-bold text-indigo-900">หมายเหตุ</div><div class="col-span-3">${window.escapeHtml(p.coordinationNote || p.coordinationNextAction || p.nextAction || '-')}</div>
                         </div>
                         <table class="survey-action-table w-full border-collapse text-[10px] mt-4">
                             <thead><tr><th class="p-2 w-8">ลำดับ</th><th class="p-2 w-20">วันที่</th><th class="p-2 w-36">การดำเนินการ</th><th class="p-2">รายละเอียด/ผล</th><th class="p-2 w-28">ผู้ดำเนินการ</th><th class="p-2 w-32">เลขหนังสือ/ผู้รับ</th><th class="p-2 w-24">สถานะ</th></tr></thead>
@@ -4201,7 +4494,8 @@
                 photoPagesContainer.innerHTML = '';
                 const pageGroups = [];
                 for (let i = 0; i < surveyPhotos.length; i += 4) pageGroups.push(surveyPhotos.slice(i, i + 4));
-                const projectTitle = window.escapeHtml ? window.escapeHtml(p.name || p.sNameOld || 'ไม่ระบุชื่อโครงการ') : (p.name || p.sNameOld || 'ไม่ระบุชื่อโครงการ');
+                const resolvedProjectTitle = window.getProjectDisplayName(p);
+                const projectTitle = window.escapeHtml ? window.escapeHtml(resolvedProjectTitle) : resolvedProjectTitle;
                 const agencyTitle = window.escapeHtml ? window.escapeHtml([p.hospital, p.district ? `อำเภอ${p.district}` : ''].filter(Boolean).join(' · ') || '-') : '-';
 
                 pageGroups.forEach((photos, pageIndex) => {
@@ -4250,7 +4544,7 @@
         window.filterAnalysisProjectsByDistrict = function() {
             const selectedDist = document.getElementById('analysisDistrictFilter').value; const sel = document.getElementById('analysisProjectSelect'); sel.innerHTML = '<option disabled selected>เลือกโครงการที่จะวิเคราะห์...</option>';
             const filteredProjects = window.projects.filter(p => !window.isArchivedCoordinationProject(p) && (selectedDist === 'all' || p.district === selectedDist));
-            filteredProjects.forEach(p => sel.innerHTML += `<option value="${p.id}">${p.name}</option>`);
+            filteredProjects.forEach(p => sel.innerHTML += `<option value="${p.id}">${window.escapeHtml(window.getProjectDisplayName(p))}</option>`);
             document.getElementById('analysisContent').classList.add('hidden'); document.getElementById('analysisContent').classList.remove('flex'); document.getElementById('analysisEmpty').classList.remove('hidden');
         };
 
@@ -4444,11 +4738,11 @@
 
         window.exportToExcel = function() {
             if (window.projects.length === 0) { window.showAlert("ไม่มีข้อมูลโครงการให้ดาวน์โหลด"); return; }
-            let tableHTML = '<table border="1"><thead><tr bgcolor="#1e40af" style="color:white"><th>ลำดับ</th><th>ชื่อโครงการ</th><th>รพ.สต.</th><th>ประเภทงาน</th><th>อำเภอ</th><th>ประเภทของงบประมาณ</th><th>ปีงบประมาณ พ.ศ.</th><th>เล่ม</th><th>หน้า</th><th>งบประมาณ (บาท)</th><th>ราคากลาง (บาท)</th><th>ราคาตามสัญญา (บาท)</th><th>เลขที่สัญญา</th><th>ผู้รับจ้าง</th><th>วันเริ่มต้นสัญญา</th><th>วันสิ้นสุดสัญญา</th><th>สถานะ</th><th>ผู้รับผิดชอบปัจจุบัน</th><th>วันที่เริ่มขั้นตอน</th><th>กำหนดเสร็จขั้นตอน</th><th>สถานะเอกสาร</th><th>สิ่งที่ต้องดำเนินการต่อ</th><th>ผู้ควบคุมงาน</th><th>คณะกรรมการตรวจรับ</th></tr></thead><tbody>';
+            let tableHTML = '<table border="1"><thead><tr bgcolor="#1e40af" style="color:white"><th>ลำดับ</th><th>ชื่อโครงการ</th><th>รพ.สต.</th><th>ประเภทงาน</th><th>อำเภอ</th><th>ประเภทของงบประมาณ</th><th>ปีงบประมาณ พ.ศ.</th><th>เล่ม</th><th>หน้า</th><th>งบประมาณ (บาท)</th><th>ราคากลาง (บาท)</th><th>ราคาตามสัญญา (บาท)</th><th>เลขที่สัญญา</th><th>ผู้รับจ้าง</th><th>วันเริ่มต้นสัญญา</th><th>วันสิ้นสุดสัญญา</th><th>สถานะ</th><th>ผู้รับผิดชอบปัจจุบัน</th><th>ตำแหน่ง</th><th>หมายเหตุ</th><th>ผู้ควบคุมงาน</th><th>คณะกรรมการตรวจรับ</th></tr></thead><tbody>';
             window.projects.forEach((p, i) => { 
                 const supsStr = p.supervisors && p.supervisors.length > 0 ? p.supervisors.map(s => s.name).join(', ') : '-';
                 const committeeStr = p.committee && p.committee.length > 0 ? p.committee.map(m => `${m.name || ''}${m.position ? ` (${m.position})` : ''}`).join('; ') : '-';
-                tableHTML += `<tr><td>${i+1}</td><td>${p.name}</td><td>${p.hospital || '-'}</td><td>${p.workType || '-'}</td><td>${p.district}</td><td>${p.budgetType || '-'}</td><td>${p.year || '-'}</td><td>${p.volume || '-'}</td><td>${p.page || '-'}</td><td>${p.budget}</td><td>${p.medianPrice || 0}</td><td>${p.contractPrice || 0}</td><td>${p.contractNo || '-'}</td><td>${p.contractor || '-'}</td><td>${p.contractStartDate || '-'}</td><td>${p.contractEndDate || '-'}</td><td>${window.normalizeProjectStage(p.status)}</td><td>${p.currentResponsible || '-'}</td><td>${p.stageStartDate || '-'}</td><td>${p.stageDueDate || '-'}</td><td>${p.documentsStatus || '-'}</td><td>${p.nextAction || '-'}</td><td>${supsStr}</td><td>${committeeStr}</td></tr>`; 
+                tableHTML += `<tr><td>${i+1}</td><td>${window.getProjectDisplayName(p)}</td><td>${p.hospital || '-'}</td><td>${p.workType || '-'}</td><td>${p.district}</td><td>${p.budgetType || '-'}</td><td>${p.year || '-'}</td><td>${p.volume || '-'}</td><td>${p.page || '-'}</td><td>${p.budget}</td><td>${p.medianPrice || 0}</td><td>${p.contractPrice || 0}</td><td>${p.contractNo || '-'}</td><td>${p.contractor || '-'}</td><td>${p.contractStartDate || '-'}</td><td>${p.contractEndDate || '-'}</td><td>${window.getProjectMainStage(p)}</td><td>${p.currentResponsible || p.coordinationResponsible || '-'}</td><td>${p.currentResponsiblePosition || p.coordinationResponsiblePosition || '-'}</td><td>${p.nextAction || p.note || '-'}</td><td>${supsStr}</td><td>${committeeStr}</td></tr>`; 
             });
             tableHTML += '</tbody></table>';
             
@@ -4461,8 +4755,8 @@
         };
 
         window.downloadTemplate = function() {
-            let tableHTML = '<table border="1"><thead><tr bgcolor="#f97316" style="color:white"><th>ชื่อโครงการ</th><th>รพ.สต.</th><th>ประเภทงาน</th><th>อำเภอ</th><th>ประเภทของงบประมาณ</th><th>ปีงบประมาณ พ.ศ.</th><th>เล่ม</th><th>หน้า</th><th>งบประมาณ (บาท)</th><th>ราคากลาง (บาท)</th><th>ราคาตามสัญญา (บาท)</th><th>เลขที่สัญญา</th><th>ผู้รับจ้าง</th><th>วันเริ่มต้นสัญญา</th><th>วันสิ้นสุดสัญญา</th><th>สถานะ</th><th>ผู้รับผิดชอบปัจจุบัน</th><th>วันที่เริ่มขั้นตอน</th><th>กำหนดเสร็จขั้นตอน</th><th>สถานะเอกสาร</th><th>สิ่งที่ต้องดำเนินการต่อ</th><th>คณะกรรมการตรวจรับ</th></tr></thead><tbody>';
-            tableHTML += '<tr><td>โครงการตัวอย่าง (ลบแถวนี้ทิ้งได้)</td><td>รพ.สต.บ้านคลอง</td><td>งานอาคาร</td><td>เมืองพิษณุโลก</td><td>ข้อบัญญัติ</td><td>2569</td><td>1</td><td>15</td><td>1500000</td><td>1500000</td><td>1480000</td><td>1/2569</td><td>บริษัทตัวอย่าง จำกัด</td><td>2026-02-01</td><td>2026-08-31</td><td>ก่อสร้าง</td><td>นายช่างตัวอย่าง</td><td>2026-02-01</td><td>2026-08-31</td><td>complete</td><td>ติดตามผลงานประจำเดือน</td><td>นาย ก (ประธาน); นาง ข (กรรมการ)</td></tr></tbody></table>';
+            let tableHTML = '<table border="1"><thead><tr bgcolor="#f97316" style="color:white"><th>ชื่อโครงการ</th><th>รพ.สต.</th><th>ประเภทงาน</th><th>อำเภอ</th><th>ประเภทของงบประมาณ</th><th>ปีงบประมาณ พ.ศ.</th><th>เล่ม</th><th>หน้า</th><th>งบประมาณ (บาท)</th><th>ราคากลาง (บาท)</th><th>ราคาตามสัญญา (บาท)</th><th>เลขที่สัญญา</th><th>ผู้รับจ้าง</th><th>วันเริ่มต้นสัญญา</th><th>วันสิ้นสุดสัญญา</th><th>สถานะ</th><th>ผู้รับผิดชอบปัจจุบัน</th><th>ตำแหน่ง</th><th>หมายเหตุ</th><th>คณะกรรมการตรวจรับ</th></tr></thead><tbody>';
+            tableHTML += '<tr><td>โครงการตัวอย่าง (ลบแถวนี้ทิ้งได้)</td><td>รพ.สต.บ้านคลอง</td><td>งานอาคาร</td><td>เมืองพิษณุโลก</td><td>ข้อบัญญัติ</td><td>2569</td><td>1</td><td>15</td><td>1500000</td><td>1500000</td><td>1480000</td><td>1/2569</td><td>บริษัทตัวอย่าง จำกัด</td><td>2026-02-01</td><td>2026-08-31</td><td>ก่อสร้าง</td><td>นายช่างตัวอย่าง</td><td>นายช่างโยธาชำนาญงาน</td><td>ติดตามผลงานประจำเดือน</td><td>นาย ก (ประธาน); นาง ข (กรรมการ)</td></tr></tbody></table>';
 
             const uri = 'data:application/vnd.ms-excel;base64,';
             const template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"></head><body>{table}</body></html>';
@@ -4492,7 +4786,7 @@
                             return match ? { name: match[1].trim(), position: match[2].trim() } : { name: item, position: '' };
                         });
                         const projData = {
-                            id: uniqueId, name: name, hospital: row['รพ.สต.'] || '', workType: row['ประเภทงาน'] || 'ไม่ระบุ', district: row['อำเภอ'] || '', contractStartDate: row['วันเริ่มต้นสัญญา'] || '', contractEndDate: row['วันสิ้นสุดสัญญา'] || '', contractNo: row['เลขที่สัญญา'] || '', contractor: row['ผู้รับจ้าง'] || '', committee: committee, budgetType: row['ประเภทของงบประมาณ'] || row['ประเภทงบประมาณ'] || 'ข้อบัญญัติ', year: String(row['ปีงบประมาณ พ.ศ.'] || row['ปีงบประมาณ'] || ''), volume: String(row['เล่ม'] || ''), page: String(row['หน้า'] || ''), budget: budget, medianPrice: medianPrice, contractPrice: contractPrice, status: window.normalizeProjectStage(row['สถานะ'] || 'เสนอความต้องการ'), currentResponsible: row['ผู้รับผิดชอบปัจจุบัน'] || '', stageStartDate: row['วันที่เริ่มขั้นตอน'] || window.todayISO(), stageDueDate: row['กำหนดเสร็จขั้นตอน'] || '', documentsStatus: row['สถานะเอกสาร'] || 'not_required', nextAction: row['สิ่งที่ต้องดำเนินการต่อ'] || '', lastUpdatedAt: new Date().toISOString(), geomType: "point", lineStyle: "solid", color: "#ef4444", weight: 5, supervisors: [], segments: [], activities: [], images: []
+                            id: uniqueId, name: name, hospital: row['รพ.สต.'] || '', workType: row['ประเภทงาน'] || 'ไม่ระบุ', district: row['อำเภอ'] || '', contractStartDate: row['วันเริ่มต้นสัญญา'] || '', contractEndDate: row['วันสิ้นสุดสัญญา'] || '', contractNo: row['เลขที่สัญญา'] || '', contractor: row['ผู้รับจ้าง'] || '', committee: committee, budgetType: row['ประเภทของงบประมาณ'] || row['ประเภทงบประมาณ'] || 'ข้อบัญญัติ', year: String(row['ปีงบประมาณ พ.ศ.'] || row['ปีงบประมาณ'] || ''), volume: String(row['เล่ม'] || ''), page: String(row['หน้า'] || ''), budget: budget, medianPrice: medianPrice, contractPrice: contractPrice, status: window.normalizeProjectStage(row['สถานะ'] || 'เสนอความต้องการ'), currentResponsible: row['ผู้รับผิดชอบปัจจุบัน'] || '', currentResponsiblePosition: row['ตำแหน่ง'] || '', stageStartDate: row['วันที่เริ่มขั้นตอน'] || window.todayISO(), stageDueDate: row['กำหนดเสร็จขั้นตอน'] || '', documentsStatus: row['สถานะเอกสาร'] || 'not_required', nextAction: row['หมายเหตุ'] || row['สิ่งที่ต้องดำเนินการต่อ'] || '', note: row['หมายเหตุ'] || '', lastUpdatedAt: new Date().toISOString(), geomType: "point", lineStyle: "solid", color: "#ef4444", weight: 5, supervisors: [], segments: [], activities: [], images: []
                         };
                         
                         window.projects.push(projData); 
@@ -4538,7 +4832,7 @@
             const filterYear = document.getElementById('dbFilterYear') ? document.getElementById('dbFilterYear').value : 'all'; const filterType = document.getElementById('dbFilterBudgetType') ? document.getElementById('dbFilterBudgetType').value : 'all'; const filterDist = document.getElementById('dbFilterDistrict') ? document.getElementById('dbFilterDistrict').value : 'all';
             const filteredProjects = window.projects.filter(p => { const matchYear = (filterYear === 'all') || (p.year === filterYear); const matchType = (filterType === 'all') || (p.budgetType === filterType); const matchDist = (filterDist === 'all') || (p.district === filterDist); return !window.isArchivedCoordinationProject(p) && matchYear && matchType && matchDist; });
             const totalProjects = filteredProjects.length; const totalBudget = filteredProjects.reduce((sum, p) => sum + (p.budget || 0), 0);
-            const completedProjects = filteredProjects.filter(p => p.status === 'แล้วเสร็จ' || p.status === 'ส่งมอบงานงวดสุดท้าย').length; const inProgressProjects = totalProjects - completedProjects;
+            const completedProjects = filteredProjects.filter(p => window.isProjectCompleted(p)).length; const inProgressProjects = totalProjects - completedProjects;
 
             document.getElementById('dbTotalProjects').innerText = totalProjects.toLocaleString(); document.getElementById('dbTotalBudget').innerText = totalBudget.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); document.getElementById('dbCompleted').innerText = completedProjects.toLocaleString(); document.getElementById('dbInProgress').innerText = inProgressProjects.toLocaleString();
 
@@ -4546,9 +4840,9 @@
 
             const districtData = {}; const projectData = []; const statusData = { 'ดำเนินการแล้วเสร็จ': 0, 'อยู่ระหว่างก่อสร้าง/รอดำเนินการ': 0 }; const budgetTypeStatusData = {};
             filteredProjects.forEach(p => {
-                const dist = p.district || 'ไม่ระบุ'; const bType = p.budgetType || 'ไม่ระบุ'; const budget = p.budget || 0; const isCompleted = (p.status === 'แล้วเสร็จ' || p.status === 'ส่งมอบงานงวดสุดท้าย');
+                const dist = p.district || 'ไม่ระบุ'; const bType = p.budgetType || 'ไม่ระบุ'; const budget = p.budget || 0; const isCompleted = window.isProjectCompleted(p);
                 if (!districtData[dist]) districtData[dist] = { count: 0, budget: 0 }; districtData[dist].count += 1; districtData[dist].budget += budget;
-                projectData.push({ name: p.name, budget: budget, type: bType });
+                projectData.push({ name: window.getProjectDisplayName(p), budget: budget, type: bType });
                 if (isCompleted) { statusData['ดำเนินการแล้วเสร็จ'] += 1; } else { statusData['อยู่ระหว่างก่อสร้าง/รอดำเนินการ'] += 1; }
                 if (!budgetTypeStatusData[bType]) { budgetTypeStatusData[bType] = { completed: 0, inProgress: 0 }; }
                 if (isCompleted) { budgetTypeStatusData[bType].completed += budget; } else { budgetTypeStatusData[bType].inProgress += budget; }
@@ -4612,16 +4906,158 @@
             const modal = document.getElementById('notificationCenterModal'); modal.classList.remove('hidden'); modal.classList.add('flex'); window.renderNotificationCenter();
         };
         window.closeNotificationCenter = function() { const modal = document.getElementById('notificationCenterModal'); modal.classList.add('hidden'); modal.classList.remove('flex'); };
+        window.getFilteredNotificationRows = function() {
+            const severity = document.getElementById('alertSeverityFilter')?.value || 'all';
+            const district = document.getElementById('alertDistrictFilter')?.value || 'all';
+            return window.getAllProjectAlerts().filter(x => (severity === 'all' || x.state.level === severity) && (district === 'all' || x.project.district === district));
+        };
         window.renderNotificationCenter = function() {
-            const severity = document.getElementById('alertSeverityFilter')?.value || 'all'; const district = document.getElementById('alertDistrictFilter')?.value || 'all';
-            const rows = window.getAllProjectAlerts().filter(x => (severity==='all'||x.state.level===severity) && (district==='all'||x.project.district===district));
+            const rows = window.getFilteredNotificationRows();
             const counts = {red:0,orange:0,yellow:0,green:0}; rows.forEach(x=>counts[x.state.level]++);
             const summary = document.getElementById('alertSummary'); if (summary) summary.innerHTML = `<span class="text-red-700">แดง ${counts.red}</span> · <span class="text-orange-600">ส้ม ${counts.orange}</span> · <span class="text-yellow-600">เหลือง ${counts.yellow}</span> · <span class="text-green-700">เขียว ${counts.green}</span>`;
             const list = document.getElementById('notificationCenterList'); if (!list) return;
             if (!rows.length) { list.innerHTML = '<div class="text-center p-12 text-gray-400"><i class="fa-solid fa-circle-check text-5xl text-green-400 mb-3"></i><p class="font-bold">ไม่พบโครงการตามตัวกรอง</p></div>'; return; }
-            list.innerHTML = rows.map(({project:p,state:s}) => { const m=window.v29SeverityMeta[s.level]; return `<div class="border ${m.card} rounded-xl p-4 shadow-sm"><div class="flex flex-wrap justify-between gap-3"><div class="min-w-0"><div class="flex items-center gap-2"><span class="${m.badge} px-2 py-1 rounded-full text-[10px] font-bold"><i class="fa-solid ${m.icon} mr-1"></i>${m.label}</span><span class="text-xs font-bold text-gray-500">ขั้น ${window.projectWorkflow.indexOf(s.stage)+1}/12 · ${window.escapeHtml(s.stage)} · อยู่ขั้นนี้ ${s.daysInStage} วัน</span></div><h3 class="font-bold text-gray-900 mt-2">${window.escapeHtml(p.name||'ไม่ระบุชื่อโครงการ')}</h3><p class="text-xs text-gray-600 mt-1">${window.escapeHtml(p.hospital||'-')} · อ.${window.escapeHtml(p.district||'-')}</p></div><div class="flex gap-2"><button onclick="window.closeNotificationCenter();window.openProjectStatusModal('${window.escapeHtml(p.id)}')" class="bg-indigo-600 text-white px-3 py-2 rounded-lg text-xs font-bold hover:bg-indigo-700"><i class="fa-solid fa-route mr-1"></i>ดูสถานะ</button><button onclick="window.closeNotificationCenter();window.editProject('${window.escapeHtml(p.id)}')" class="admin-only bg-white border px-3 py-2 rounded-lg text-xs font-bold text-blue-700 hover:bg-blue-50"><i class="fa-solid fa-pen mr-1"></i>แก้ไข</button></div></div><div class="grid md:grid-cols-3 gap-3 mt-3 text-xs"><div class="bg-white bg-opacity-70 rounded p-3"><b>เหตุผลแจ้งเตือน</b><ul class="list-disc ml-4 mt-1">${s.reasons.map(r=>`<li>${window.escapeHtml(r)}</li>`).join('')}</ul></div><div class="bg-white bg-opacity-70 rounded p-3"><b>ผู้รับผิดชอบ</b><p class="mt-1">${window.escapeHtml(p.currentResponsible||'ยังไม่ระบุ')}</p></div><div class="bg-white bg-opacity-70 rounded p-3"><b>สิ่งที่ต้องทำต่อ</b><p class="mt-1">${window.escapeHtml(p.nextAction||'ยังไม่ระบุ')}</p></div></div></div>`; }).join('');
+            list.innerHTML = rows.map(({project:p,state:s}) => {
+                const m = window.v29SeverityMeta[s.level];
+                const responsible = p.currentResponsible || p.coordinationResponsible || 'ยังไม่ระบุ';
+                const responsiblePosition = p.currentResponsiblePosition || p.coordinationResponsiblePosition || '';
+                const missingFields = window.getProjectMissingFields(p);
+                const category = window.getProjectCategory(p);
+                const followUpLabel = 'หมายเหตุ';
+                const followUpText = category.key === 'coordination' ? (p.coordinationNote || p.coordinationNextAction || p.nextAction) : (p.nextAction || p.note);
+                const dataWarning = missingFields.length
+                    ? `<span class="bg-red-100 text-red-700 border border-red-200 px-2 py-1 rounded-full text-[10px] font-bold"><i class="fa-solid fa-database mr-1"></i>ข้อมูลไม่ครบ: ${window.escapeHtml(missingFields.join(', '))}</span>`
+                    : '';
+                return `<div class="border ${m.card} rounded-xl p-4 shadow-sm">
+                    <div class="flex flex-wrap justify-between gap-3">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="${m.badge} px-2 py-1 rounded-full text-[10px] font-bold"><i class="fa-solid ${m.icon} mr-1"></i>${m.label}</span>
+                                <span class="text-xs font-bold text-gray-500">ขั้น ${s.stageIndex+1}/${s.stageTotal} · ${window.escapeHtml(s.stage)} · อยู่ขั้นนี้ ${s.daysInStage} วัน</span>
+                                ${dataWarning}
+                            </div>
+                            <h3 class="font-bold text-gray-900 mt-2">${window.escapeHtml(window.getProjectDisplayName(p))}</h3>
+                            <p class="text-xs text-gray-600 mt-1">${window.escapeHtml(p.hospital||'-')} · อ.${window.escapeHtml(p.district||'-')}</p>
+                            <p class="text-[10px] text-gray-500 mt-1"><b>ประเภท:</b> ${window.escapeHtml(category.label)} · <b>รหัสข้อมูล:</b> ${window.escapeHtml(p.id)}</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2 self-start">
+                            <button onclick="window.showProjectRecordInfo('${window.escapeHtml(p.id)}')" class="bg-white border border-gray-300 px-3 py-2 rounded-lg text-xs font-bold text-gray-700 hover:bg-gray-50"><i class="fa-solid fa-circle-info mr-1"></i>ข้อมูล</button>
+                            <button onclick="window.closeNotificationCenter();window.openProjectStatusModal('${window.escapeHtml(p.id)}')" class="bg-indigo-600 text-white px-3 py-2 rounded-lg text-xs font-bold hover:bg-indigo-700"><i class="fa-solid fa-route mr-1"></i>ดูสถานะ</button>
+                            <button onclick="window.closeNotificationCenter();window.editProject('${window.escapeHtml(p.id)}')" class="admin-only bg-white border px-3 py-2 rounded-lg text-xs font-bold text-blue-700 hover:bg-blue-50"><i class="fa-solid fa-pen mr-1"></i>แก้ไข</button>
+                            <button onclick="window.confirmDeleteProject('${window.escapeHtml(p.id)}')" class="admin-only bg-red-50 border border-red-200 px-3 py-2 rounded-lg text-xs font-bold text-red-700 hover:bg-red-100" title="ลบรายการนี้ออกจากฐานข้อมูล"><i class="fa-solid fa-trash-can mr-1"></i>ลบ</button>
+                        </div>
+                    </div>
+                    <div class="grid md:grid-cols-3 gap-3 mt-3 text-xs">
+                        <div class="bg-white bg-opacity-70 rounded p-3"><b>เหตุผลแจ้งเตือน</b><ul class="list-disc ml-4 mt-1">${s.reasons.map(r=>`<li>${window.escapeHtml(r)}</li>`).join('')}</ul></div>
+                        <div class="bg-white bg-opacity-70 rounded p-3"><b>ผู้รับผิดชอบ</b><p class="mt-1">${window.escapeHtml(responsible)}</p>${responsiblePosition ? `<p class="mt-0.5 text-gray-500">${window.escapeHtml(responsiblePosition)}</p>` : ''}</div>
+                        <div class="bg-white bg-opacity-70 rounded p-3"><b>${followUpLabel}</b><p class="mt-1">${window.escapeHtml(followUpText || 'ยังไม่ระบุ')}</p></div>
+                    </div>
+                </div>`;
+            }).join('');
             window.applyRoleUI();
         };
+
+        window.closeNotificationPrintPreview = function() {
+            document.body.classList.remove('printing-alerts');
+            document.getElementById('notificationPrintPageStyle')?.remove();
+            const modal = document.getElementById('notificationPrintModal');
+            if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+        };
+
+        window.printNotificationReport = function() {
+            document.getElementById('notificationPrintPageStyle')?.remove();
+            const pageStyle = document.createElement('style');
+            pageStyle.id = 'notificationPrintPageStyle';
+            pageStyle.textContent = '@page { size: A4 landscape; margin: 8mm; }';
+            document.head.appendChild(pageStyle);
+            document.body.classList.add('printing-alerts');
+            window.print();
+        };
+
+        window.openNotificationPrintPreview = function() {
+            const rows = window.getFilteredNotificationRows();
+            if (!rows.length) { window.showAlert('ไม่พบโครงการตามตัวกรอง จึงยังไม่มีรายการสำหรับพิมพ์'); return; }
+            const e = window.escapeHtml;
+            const severitySelect = document.getElementById('alertSeverityFilter');
+            const districtSelect = document.getElementById('alertDistrictFilter');
+            const severityLabel = severitySelect?.options[severitySelect.selectedIndex]?.text || 'ทุกระดับ';
+            const districtLabel = districtSelect?.options[districtSelect.selectedIndex]?.text || 'ทุกอำเภอ';
+            const staleDays = Math.max(1, Number(document.getElementById('alertStaleDays')?.value) || 14);
+            const dueSoonDays = Math.max(1, Number(document.getElementById('alertDueSoonDays')?.value) || 7);
+            const categoryOrder = {coordination:0, ordinance:1, general:2};
+            const printRows = [...rows].sort((a, b) => {
+                const aCategory = window.getProjectCategory(a.project).key;
+                const bCategory = window.getProjectCategory(b.project).key;
+                return (categoryOrder[aCategory] ?? 9) - (categoryOrder[bCategory] ?? 9);
+            });
+            const counts = {red:0,orange:0,yellow:0,green:0}; printRows.forEach(item => counts[item.state.level]++);
+            const categoryCounts = {coordination:0, ordinance:0, general:0};
+            printRows.forEach(item => { const key = window.getProjectCategory(item.project).key; categoryCounts[key] = (categoryCounts[key] || 0) + 1; });
+            const categoryMeta = {
+                coordination:{bg:'#dbeafe',fg:'#1d4ed8',border:'#60a5fa'},
+                ordinance:{bg:'#ede9fe',fg:'#6d28d9',border:'#a78bfa'},
+                general:{bg:'#f1f5f9',fg:'#475569',border:'#94a3b8'}
+            };
+            const meta = {
+                red:{label:'เร่งด่วน',short:'แดง',bg:'#fee2e2',fg:'#991b1b',border:'#ef4444'},
+                orange:{label:'เฝ้าระวัง',short:'ส้ม',bg:'#ffedd5',fg:'#9a3412',border:'#f97316'},
+                yellow:{label:'ควรติดตาม',short:'เหลือง',bg:'#fef9c3',fg:'#854d0e',border:'#eab308'},
+                green:{label:'ปกติ',short:'เขียว',bg:'#dcfce7',fg:'#166534',border:'#22c55e'}
+            };
+            const now = new Date();
+            const printedAt = now.toLocaleString('th-TH', {dateStyle:'long', timeStyle:'short'});
+            const tableRows = printRows.map(({project:p,state:s}, index) => {
+                const m = meta[s.level];
+                const projectCategory = window.getProjectCategory(p);
+                const categoryStyle = categoryMeta[projectCategory.key] || categoryMeta.general;
+                const isCoordinationProject = projectCategory.key === 'coordination';
+                const stageNo = Math.max(1, Number(s.stageIndex) + 1);
+                const reasons = s.reasons.map(reason => `<div style="margin-bottom:2px;">• ${e(reason)}</div>`).join('');
+                const followUpText = isCoordinationProject ? (p.coordinationNote || p.coordinationNextAction || p.nextAction) : (p.nextAction || p.note);
+                return `<tr>
+                    <td style="text-align:center;">${index + 1}</td>
+                    <td style="text-align:center;"><span class="alert-print-color" style="display:inline-block;background:${m.bg};color:${m.fg};border:1px solid ${m.border};border-radius:12px;padding:3px 7px;font-weight:700;">${m.short} — ${m.label}</span><div style="margin-top:5px;font-weight:700;">${s.daysInStage} วัน</div></td>
+                    <td style="text-align:center;"><span class="alert-print-color" style="display:inline-block;background:${categoryStyle.bg};color:${categoryStyle.fg};border:1px solid ${categoryStyle.border};border-radius:12px;padding:3px 7px;font-weight:700;">${e(projectCategory.label)}</span></td>
+                    <td><div style="font-weight:700;color:#172554;">${e(window.getProjectDisplayName(p))}</div><div style="font-size:9px;color:#64748b;margin-top:3px;">${e(p.hospital || '-')} · อ.${e(p.district || '-')} · ปี ${e(p.year || p.coordinationYear || '-')}</div></td>
+                    <td><div style="font-weight:700;">ขั้น ${stageNo}/${s.stageTotal}</div><div style="margin-top:2px;">${e(s.stage)}</div><div style="font-size:9px;color:#64748b;margin-top:3px;">เริ่มขั้น ${window.formatThaiDate(s.stageStartDate)}</div></td>
+                    <td>${reasons}</td>
+                    <td><div style="font-weight:700;">${e(p.currentResponsible || p.coordinationResponsible || 'ยังไม่ระบุ')}</div>${(p.currentResponsiblePosition || p.coordinationResponsiblePosition) ? `<div style="font-size:9px;color:#64748b;margin-top:2px;">${e(p.currentResponsiblePosition || p.coordinationResponsiblePosition)}</div>` : ''}</td>
+                    <td><div><b>หมายเหตุ:</b> ${e(followUpText || 'ยังไม่ระบุ')}</div></td>
+                </tr>`;
+            }).join('');
+            const area = document.getElementById('notificationPrintArea');
+            area.innerHTML = `
+                <div style="font-family:'Sarabun',sans-serif;">
+                    <header style="border-bottom:3px solid #991b1b;padding-bottom:10px;display:flex;justify-content:space-between;gap:20px;align-items:flex-start;">
+                        <div><div style="font-size:19px;font-weight:700;color:#7f1d1d;">รายงานสรุปโครงการที่ต้องติดตามและเร่งรัด</div><div style="font-size:12px;font-weight:700;color:#334155;margin-top:3px;">ระบบฐานข้อมูลโครงการก่อสร้าง รพ.สต. องค์การบริหารส่วนจังหวัดพิษณุโลก</div></div>
+                        <div style="text-align:right;font-size:9px;color:#64748b;"><div><b>วันที่ออกรายงาน</b></div><div>${e(printedAt)} น.</div><div style="margin-top:3px;">จำนวน ${printRows.length} โครงการ</div></div>
+                    </header>
+                    <section style="margin-top:9px;border:1px solid #cbd5e1;background:#f8fafc;padding:7px 10px;border-radius:6px;display:grid;grid-template-columns:.8fr .8fr 1.2fr 1.5fr;gap:8px;font-size:9px;">
+                        <div><b>ระดับที่เลือก:</b> ${e(severityLabel)}</div><div><b>พื้นที่:</b> ${e(districtLabel)}</div><div><b>เกณฑ์:</b> ไม่อัปเดตเกิน ${staleDays} วัน · ใกล้ครบกำหนด ${dueSoonDays} วัน</div><div><b>ประเภทโครงการ:</b> ประสานแผน ${categoryCounts.coordination} · ข้อบัญญัติ ${categoryCounts.ordinance} · อื่นๆ ${categoryCounts.general}</div>
+                    </section>
+                    <section style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:8px;">
+                        ${['red','orange','yellow','green'].map(level => { const m=meta[level]; return `<div class="alert-print-color" style="border:1px solid ${m.border};background:${m.bg};color:${m.fg};border-radius:6px;padding:6px 9px;display:flex;justify-content:space-between;align-items:center;"><b>${m.short} — ${m.label}</b><span style="font-size:16px;font-weight:700;">${counts[level]}</span></div>`; }).join('')}
+                    </section>
+                    <table class="alert-print-table" style="width:100%;border-collapse:collapse;margin-top:9px;table-layout:fixed;font-size:9px;line-height:1.35;">
+                        <thead><tr class="alert-print-color" style="background:#7f1d1d;color:white;"><th style="width:4%;">ลำดับ</th><th style="width:9%;">ระดับ/ค้าง</th><th style="width:10%;">ประเภทโครงการ</th><th style="width:20%;">โครงการ/หน่วยงาน</th><th style="width:12%;">ขั้นตอนปัจจุบัน</th><th style="width:16%;">เหตุผลแจ้งเตือน</th><th style="width:11%;">ผู้รับผิดชอบ</th><th style="width:18%;">หมายเหตุ/การติดตาม</th></tr></thead>
+                        <tbody>${tableRows}</tbody>
+                    </table>
+                    <section style="margin-top:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:30px;text-align:center;font-size:10px;break-inside:avoid;">
+                        <div><div style="height:24px;border-bottom:1px dotted #64748b;"></div><div style="margin-top:4px;">ผู้จัดทำรายงาน</div><div style="margin-top:14px;">วันที่ ........../........../..........</div></div>
+                        <div><div style="height:24px;border-bottom:1px dotted #64748b;"></div><div style="margin-top:4px;">ผู้ตรวจสอบ</div><div style="margin-top:14px;">วันที่ ........../........../..........</div></div>
+                        <div><div style="height:24px;border-bottom:1px dotted #64748b;"></div><div style="margin-top:4px;">ผู้บริหาร/ผู้สั่งการ</div><div style="margin-top:14px;">วันที่ ........../........../..........</div></div>
+                    </section>
+                    <footer style="margin-top:12px;border-top:1px solid #cbd5e1;padding-top:5px;display:flex;justify-content:space-between;font-size:8px;color:#64748b;"><span>รายงานนี้แสดงข้อมูลตามตัวกรอง ณ เวลาที่ออกรายงาน</span><span>ศูนย์แจ้งเตือนและเร่งรัด · อบจ.พิษณุโลก</span></footer>
+                </div>`;
+            area.querySelectorAll('th,td').forEach(cell => { cell.style.border='1px solid #94a3b8'; cell.style.padding='5px'; cell.style.verticalAlign='top'; });
+            const modal = document.getElementById('notificationPrintModal');
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+        };
+
+        window.addEventListener('afterprint', () => {
+            document.body.classList.remove('printing-alerts');
+            document.getElementById('notificationPrintPageStyle')?.remove();
+        });
 
         window.refreshOperationalViews = function() { window.updateAlertCenterBadge(); if (!document.getElementById('notificationCenterModal')?.classList.contains('hidden')) window.renderNotificationCenter(); if (!document.getElementById('dashboardModal')?.classList.contains('hidden')) window.renderDashboard(); };
 
@@ -4642,8 +5078,8 @@
             const filtered=window.projects.filter(p=>!window.isArchivedCoordinationProject(p)&&(fy==='all'||p.year===fy)&&(ft==='all'||p.budgetType===ft)&&(fd==='all'||p.district===fd)&&(mode!=='hospital'||fh==='all'||p.hospital===fh)&&(mode!=='engineering'||fr==='all'||p.currentResponsible===fr));
             const total=filtered.length,budget=filtered.reduce((s,p)=>s+(Number(p.budget)||0),0),completed=filtered.filter(window.isProjectCompleted).length; document.getElementById('dbTotalProjects').textContent=total.toLocaleString();document.getElementById('dbTotalBudget').textContent=budget.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});document.getElementById('dbCompleted').textContent=completed.toLocaleString();document.getElementById('dbInProgress').textContent=(total-completed).toLocaleString();
             const alerts=window.getAllProjectAlerts(filtered), counts={red:0,orange:0,yellow:0,green:0};alerts.forEach(x=>counts[x.state.level]++);['Red','Orange','Yellow'].forEach(k=>document.getElementById('db'+k+'Alerts').textContent=counts[k.toLowerCase()]);
-            const action=document.getElementById('dbActionList');const actionable=alerts.filter(x=>x.state.level!=='green').slice(0,20); action.innerHTML=actionable.length?actionable.map(({project:p,state:s})=>{const m=window.v29SeverityMeta[s.level];return `<div class="p-3 flex gap-3 items-start hover:bg-gray-50"><span class="${m.badge} rounded-full w-7 h-7 flex items-center justify-center shrink-0"><i class="fa-solid ${m.icon}"></i></span><div class="flex-1 min-w-0"><div class="font-bold text-sm truncate">${window.escapeHtml(p.name||'-')}</div><div class="text-xs text-gray-500">${window.escapeHtml(p.hospital||'-')} · ${window.escapeHtml(s.stage)} · ${window.escapeHtml(p.currentResponsible||'ยังไม่ระบุผู้รับผิดชอบ')}</div><div class="text-xs text-red-700 mt-1">${s.reasons.map(window.escapeHtml).join(' · ')}</div></div><button onclick="window.openProjectStatusModal('${window.escapeHtml(p.id)}')" class="text-xs bg-indigo-50 border border-indigo-200 text-indigo-700 px-3 py-2 rounded-lg font-bold hover:bg-indigo-100">ดูสถานะ</button></div>`;}).join(''):'<div class="p-8 text-center text-green-600 font-bold"><i class="fa-solid fa-circle-check mr-2"></i>ไม่มีรายการที่ต้องเร่งรัด</div>';
-            const districts={},stages={};filtered.forEach(p=>{const d=p.district||'ไม่ระบุ';districts[d]??={count:0,budget:0};districts[d].count++;districts[d].budget+=Number(p.budget)||0;const s=window.normalizeProjectStage(p.status);stages[s]=(stages[s]||0)+1;}); const labels=Object.keys(districts),colors=['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316','#6366f1','#64748b'];Chart.defaults.font.family="'Sarabun', sans-serif";
+            const action=document.getElementById('dbActionList');const actionable=alerts.filter(x=>x.state.level!=='green').slice(0,20); action.innerHTML=actionable.length?actionable.map(({project:p,state:s})=>{const m=window.v29SeverityMeta[s.level];return `<div class="p-3 flex gap-3 items-start hover:bg-gray-50"><span class="${m.badge} rounded-full w-7 h-7 flex items-center justify-center shrink-0"><i class="fa-solid ${m.icon}"></i></span><div class="flex-1 min-w-0"><div class="font-bold text-sm truncate">${window.escapeHtml(window.getProjectDisplayName(p))}</div><div class="text-xs text-gray-500">${window.escapeHtml(p.hospital||'-')} · ${window.escapeHtml(s.stage)} · ${window.escapeHtml(p.currentResponsible||'ยังไม่ระบุผู้รับผิดชอบ')}</div><div class="text-xs text-red-700 mt-1">${s.reasons.map(window.escapeHtml).join(' · ')}</div></div><button onclick="window.openProjectStatusModal('${window.escapeHtml(p.id)}')" class="text-xs bg-indigo-50 border border-indigo-200 text-indigo-700 px-3 py-2 rounded-lg font-bold hover:bg-indigo-100">ดูสถานะ</button></div>`;}).join(''):'<div class="p-8 text-center text-green-600 font-bold"><i class="fa-solid fa-circle-check mr-2"></i>ไม่มีรายการที่ต้องเร่งรัด</div>';
+            const districts={},stages={};filtered.forEach(p=>{const d=p.district||'ไม่ระบุ';districts[d]??={count:0,budget:0};districts[d].count++;districts[d].budget+=Number(p.budget)||0;const s=window.getProjectMainStage(p);stages[s]=(stages[s]||0)+1;}); const labels=Object.keys(districts),colors=['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316','#6366f1','#64748b'];Chart.defaults.font.family="'Sarabun', sans-serif";
             const destroy=n=>{if(window[n])window[n].destroy();};destroy('dbBudgetChartInstance');destroy('dbDistCountChartInstance');destroy('dbStatusChartInstance');destroy('dbBudgetTypeChartInstance'); if(!total)return;
             document.getElementById('dbChart1Title').innerHTML='<i class="fa-solid fa-chart-column text-blue-600 mr-2"></i>งบประมาณแยกตามอำเภอ';document.getElementById('dbChart2Title').innerHTML='<i class="fa-solid fa-chart-pie text-indigo-600 mr-2"></i>สัดส่วนโครงการรายอำเภอ';
             window.dbBudgetChartInstance=new Chart(document.getElementById('dbBudgetChart'),{type:'bar',data:{labels,datasets:[{label:'งบประมาณ (บาท)',data:labels.map(d=>districts[d].budget),backgroundColor:'#3b82f6'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
@@ -4897,7 +5333,7 @@
             };
 
             window.deleteProjectFromCloud = async function(projId) {
-                if (!window.currentUser) return;
+                if (!window.currentUser) { window.showAlert('ยังไม่เชื่อมต่อบัญชีผู้ใช้ จึงยังไม่ลบข้อมูลเพื่อป้องกันรายการกลับมาอีกครั้ง'); return false; }
                 try {
                     const projRef = doc(db, 'projects', projId.toString());
                     const projectSnapshot = await getDoc(projRef);
@@ -5006,6 +5442,7 @@
                         });
                         
                         window.renderMarkers();
+                        if (window.refreshOperationalViews) window.refreshOperationalViews();
                     }, (error) => { console.error("Firestore Listen Hosp Error:", error); });
                 }
             });
