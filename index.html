@@ -53,6 +53,7 @@
         /* V47: remove coordination priority/follow-up date and use a single note field */
         /* V48: track State Property land-use permission and construction readiness */
         /* V49: move land-right status to the hospital master registry and color hospital map icons */
+        /* V50: continuously add multiple projects for the same hospital without re-entering shared data */
         .survey-print-page { box-sizing: border-box; background: #fff; width: 100%; min-height: 210mm; }
         .survey-photo-page { border-top: 8px solid #1e3a8a; }
         .survey-photo-grid { display: grid; gap: 5mm; margin-top: 5mm; }
@@ -357,6 +358,9 @@
             </div>
 
             <form id="projectForm" onsubmit="window.saveProject(event)" class="p-6 space-y-4">
+                <div id="continuousEntryBanner" class="hidden bg-green-50 border border-green-300 text-green-800 rounded-xl px-4 py-3 text-sm font-bold shadow-sm">
+                    <i class="fa-solid fa-circle-check mr-2"></i><span id="continuousEntryBannerText">บันทึกรายการก่อนหน้าแล้ว พร้อมเพิ่มโครงการถัดไป</span>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     
                     <!-- 1. ประเภทของงบประมาณ -->
@@ -789,15 +793,17 @@
                     </div>
                 </div>
 
-                <div class="col-span-1 md:col-span-2 pt-4 flex justify-end gap-3 border-t mt-4">
+                <div class="col-span-1 md:col-span-2 pt-4 flex flex-wrap justify-end gap-3 border-t mt-4">
                     <button type="button" onclick="window.closeModal()" class="px-5 py-2.5 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg font-bold transition-colors">ยกเลิก</button>
                     
-                    <div id="surveyBtns" class="flex gap-2 hidden transition-all">
-                        <button type="submit" class="px-8 py-2.5 text-white bg-blue-600 hover:bg-blue-700 rounded-lg font-bold shadow-md transition-colors"><i class="fa-solid fa-save mr-1 text-white"></i> บันทึกข้อมูลงานสำรวจ</button>
+                    <div id="surveyBtns" class="flex flex-wrap gap-2 hidden transition-all">
+                        <button id="surveyContinueBtn" type="submit" data-save-mode="continue" class="px-5 py-2.5 text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg font-bold shadow-md transition-colors"><i class="fa-solid fa-plus mr-1"></i> บันทึกและเพิ่มโครงการถัดไป</button>
+                        <button type="submit" data-save-mode="close" class="px-8 py-2.5 text-white bg-blue-600 hover:bg-blue-700 rounded-lg font-bold shadow-md transition-colors"><i class="fa-solid fa-save mr-1 text-white"></i> บันทึกและปิด</button>
                     </div>
 
-                    <div id="standardBtns" class="flex gap-2 transition-all">
-                        <button type="submit" class="px-8 py-2.5 text-white bg-blue-600 hover:bg-blue-700 rounded-lg font-bold shadow-md transition-colors"><i class="fa-solid fa-save mr-1 text-white"></i> บันทึกข้อมูลโครงการ</button>
+                    <div id="standardBtns" class="flex flex-wrap gap-2 transition-all">
+                        <button id="standardContinueBtn" type="submit" data-save-mode="continue" class="px-5 py-2.5 text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg font-bold shadow-md transition-colors"><i class="fa-solid fa-plus mr-1"></i> บันทึกและเพิ่มโครงการถัดไป</button>
+                        <button type="submit" data-save-mode="close" class="px-8 py-2.5 text-white bg-blue-600 hover:bg-blue-700 rounded-lg font-bold shadow-md transition-colors"><i class="fa-solid fa-save mr-1 text-white"></i> บันทึกและปิด</button>
                     </div>
                 </div>
             </form>
@@ -2863,6 +2869,9 @@
         window.openModal = function() { 
             window.editingProjectId = null;
             window.originalEditingStage = null;
+            document.getElementById('continuousEntryBanner')?.classList.add('hidden');
+            document.getElementById('surveyContinueBtn')?.classList.remove('hidden');
+            document.getElementById('standardContinueBtn')?.classList.remove('hidden');
             document.getElementById('modalTitleText').innerHTML = '<i class="fa-solid fa-clipboard-list mr-2"></i> ป้อนรายละเอียดโครงการก่อสร้าง';
             document.getElementById('projectModal').classList.remove('hidden'); 
             document.getElementById('projectForm').reset();
@@ -2911,10 +2920,58 @@
             window.renderPdfPreviews(); window.renderImagePreviews();
         };
 
+        window.getNextSurveyOrder = function(district, hospital, coordinationYear, minimum = 1) {
+            const orders = (window.projects || [])
+                .filter(p => p.budgetType === 'งานสำรวจและประมาณราคาเข้าแผน'
+                    && String(p.district || '') === String(district || '')
+                    && String(p.hospital || '') === String(hospital || '')
+                    && String(p.coordinationYear || p.year || '') === String(coordinationYear || ''))
+                .map(p => parseInt(p.sOrder, 10))
+                .filter(Number.isFinite);
+            return Math.max(Number(minimum) || 1, orders.length ? Math.max(...orders) + 1 : 1);
+        };
+
+        window.prepareNextProjectEntry = function(context, savedProjectName) {
+            window.openModal();
+            document.getElementById('pBudgetType').value = context.budgetType;
+            window.toggleFormLayout();
+
+            if (context.isSurvey) {
+                document.getElementById('sDistrict').value = context.district;
+                window.updateHospitalList();
+                document.getElementById('sAgency').value = context.hospital;
+                document.getElementById('sCoordinationYear').value = context.year;
+                document.getElementById('sOrder').value = window.getNextSurveyOrder(context.district, context.hospital, context.year, context.nextOrder);
+                document.getElementById('sInspectorName').value = context.inspectorName || '';
+                document.getElementById('sInspectorPos').value = context.inspectorPosition || '';
+                document.getElementById('sCoordResponsible').value = context.responsible || '';
+                document.getElementById('sCoordResponsiblePosition').value = context.responsiblePosition || '';
+            } else {
+                document.getElementById('pDistrict').value = context.district;
+                window.updateHospitalList(context.hospital);
+                document.getElementById('pYear').value = context.year;
+                document.getElementById('pWorkType').value = context.workType || '';
+            }
+
+            const banner = document.getElementById('continuousEntryBanner');
+            const bannerText = document.getElementById('continuousEntryBannerText');
+            if (banner && bannerText) {
+                bannerText.textContent = `บันทึก “${savedProjectName || 'โครงการก่อนหน้า'}” แล้ว — คงข้อมูล รพ.สต. เดิมไว้ พร้อมเพิ่มโครงการถัดไป`;
+                banner.classList.remove('hidden');
+            }
+            document.getElementById('modalTitleText').innerHTML = '<i class="fa-solid fa-layer-group mr-2"></i> เพิ่มโครงการถัดไปของ รพ.สต. เดิม';
+            const scrollBox = document.querySelector('#projectModal .custom-scrollbar');
+            if (scrollBox) scrollBox.scrollTo({top:0, behavior:'smooth'});
+            setTimeout(() => (context.isSurvey ? document.getElementById('sNameOld') : document.getElementById('pName'))?.focus(), 250);
+        };
+
         window.closeModal = function() { document.getElementById('projectModal').classList.add('hidden'); };
 
         window.editProject = async function(id) {
             window.editingProjectId = id;
+            document.getElementById('continuousEntryBanner')?.classList.add('hidden');
+            document.getElementById('surveyContinueBtn')?.classList.add('hidden');
+            document.getElementById('standardContinueBtn')?.classList.add('hidden');
             const p = window.projects.find(proj => proj.id.toString() === id.toString());
             if (!p) return;
             let resolvedImages = p.images ? [...p.images] : [];
@@ -3059,19 +3116,16 @@
 
         window.saveProject = async function(e) {
             e.preventDefault();
-            
-            const saveBtn1 = document.querySelector('#standardBtns button');
-            const saveBtn2 = document.querySelector('#surveyBtns button');
-            const origText1 = saveBtn1 ? saveBtn1.innerHTML : '';
-            const origText2 = saveBtn2 ? saveBtn2.innerHTML : '';
+            const isContinuousEntry = e.submitter?.dataset?.saveMode === 'continue' && !window.editingProjectId;
+            const saveButtons = [...document.querySelectorAll('#standardBtns button[type="submit"], #surveyBtns button[type="submit"]')];
+            const originalButtonHtml = new Map(saveButtons.map(button => [button, button.innerHTML]));
+            const activeSaveButton = e.submitter || saveButtons[0];
             const setSaveProgress = (message) => {
                 const html = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> ${message}`;
-                if (saveBtn1) saveBtn1.innerHTML = html;
-                if (saveBtn2) saveBtn2.innerHTML = html;
+                if (activeSaveButton) activeSaveButton.innerHTML = html;
             };
-            
-            if(saveBtn1) { saveBtn1.disabled = true; saveBtn1.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> กำลังตรวจสอบข้อมูล...'; }
-            if(saveBtn2) { saveBtn2.disabled = true; saveBtn2.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> กำลังตรวจสอบข้อมูล...'; }
+            saveButtons.forEach(button => { button.disabled = true; });
+            setSaveProgress('กำลังตรวจสอบข้อมูล...');
 
             let createdImageRefsForRollback = [];
             try {
@@ -3272,6 +3326,19 @@
                     pdfs: uploadedPdfs,
                     ...surveyData
                 };
+                const continuationContext = {
+                    isSurvey,
+                    budgetType: bType,
+                    district: distValue,
+                    hospital: cleanHospValue,
+                    year: finalYear,
+                    workType: finalWorkType,
+                    nextOrder: isSurvey ? (parseInt(surveyData.sOrder, 10) || 0) + 1 : 1,
+                    inspectorName: isSurvey ? surveyData.sInspectorName : '',
+                    inspectorPosition: isSurvey ? surveyData.sInspectorPos : '',
+                    responsible: isSurvey ? surveyData.coordinationResponsible : '',
+                    responsiblePosition: isSurvey ? surveyData.coordinationResponsiblePosition : ''
+                };
 
                 if (!window.saveProjectToCloud) throw new Error('ระบบฐานข้อมูลยังไม่พร้อม กรุณารอสักครู่แล้วลองใหม่');
                 const isExistingProject = Boolean(window.editingProjectId);
@@ -3302,10 +3369,13 @@
 
                 const needsPromotion = isSurvey && updatedData.coordinationSelectionResult === 'ได้รับคัดเลือกเข้าสู่ข้อบัญญัติ' && !updatedData.ordinanceProjectId;
                 const saveSuccessText = window.editingProjectId ? "อัปเดตข้อมูลโครงการและรูปภาพสำเร็จ" : "เพิ่มโครงการใหม่และบันทึกรูปภาพสำเร็จ";
-                window.closeModal();
                 if (needsPromotion) {
+                    window.closeModal();
                     window.showConfirm('บันทึกขั้นที่ 11 “โครงการถูกคัดเลือกเป็นข้อบัญญัติ” เรียบร้อยแล้ว\n\nต้องการสร้างแฟ้มโครงการข้อบัญญัติที่เริ่มขั้นที่ 5 — จัดสรรงบประมาณ ต่อทันทีหรือไม่?', () => window.openPromoteCoordinationModal(projId));
+                } else if (isContinuousEntry) {
+                    window.prepareNextProjectEntry(continuationContext, window.getProjectDisplayName(updatedData));
                 } else {
+                    window.closeModal();
                     window.showAlert(saveSuccessText);
                 }
 
@@ -3323,8 +3393,10 @@
                 }
                 window.showAlert(`เกิดข้อผิดพลาดในการบันทึกรูปหรือข้อมูล\n${error.message || 'กรุณาตรวจสอบอินเทอร์เน็ตและลองใหม่'}`);
             } finally {
-                if(saveBtn1) { saveBtn1.disabled = false; saveBtn1.innerHTML = origText1; }
-                if(saveBtn2) { saveBtn2.disabled = false; saveBtn2.innerHTML = origText2; }
+                saveButtons.forEach(button => {
+                    button.disabled = false;
+                    button.innerHTML = originalButtonHtml.get(button) || button.innerHTML;
+                });
             }
         };
 
